@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import axios from "axios";
+import { getUserProfile } from "../services/api";
 
 function GoogleAuthSuccess() {
   const navigate = useNavigate();
@@ -12,10 +12,11 @@ function GoogleAuthSuccess() {
 
     if (!token) {
       console.error("Token non trouvé dans l'URL");
+      navigate("/login");
       return;
     }
 
-    // 🔐 Sauvegarde du token dans le localStorage
+    // 🔐 Sauvegarde du token
     localStorage.setItem("token", token);
 
     let decoded;
@@ -23,7 +24,7 @@ function GoogleAuthSuccess() {
       decoded = jwtDecode(token);
     } catch (error) {
       console.error("Échec du décodage du token :", error);
-      navigate("/profiling-test");
+      navigate("/login");
       return;
     }
 
@@ -31,37 +32,47 @@ function GoogleAuthSuccess() {
 
     if (!userId) {
       console.error("user_id manquant dans le token");
-      navigate("/profiling-test");
+      navigate("/login");
       return;
     }
 
-    // 📡 Vérifie si le test de profil est déjà rempli
-    axios.get(`http://localhost:8000/api/profil/recuperer_reponses/${userId}/`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    // 📡 Vérifie si le profil existe et est complet
+    getUserProfile(userId)
       .then((response) => {
-        // ✅ Si on reçoit des réponses, on redirige vers /home
-        if (response.data && Object.keys(response.data).length > 1) {
-          navigate("/home");
+        console.log("Profil récupéré :", response);
+        
+        // ✅ Vérifier si le profil est complet (5 questions répondues)
+        const isComplete = response.is_complete || 
+                          (response.questions_reponses && 
+                           response.questions_reponses.length >= 5 &&
+                           response.questions_reponses.every(q => q.reponse));
+        
+        if (isComplete) {
+          console.log("✅ Profil complet → Redirection vers /home");
+          navigate("/pdf-manager");
         } else {
+          console.log("⚠️ Profil incomplet → Redirection vers /profiling-test");
           navigate("/profiling-test");
         }
       })
       .catch((error) => {
-        if (error.response && error.response.status === 404) {
-          // 👤 Utilisateur sans test → rediriger vers le test
-          navigate("/profiling-test");
-        } else {
-          console.error("Erreur API :", error);
-          navigate("/profiling-test");
+        console.error("Erreur lors de la récupération du profil :", error);
+        
+        // Si le profil n'existe pas (404) ou erreur → test de profiling
+        if (error.response?.status === 404) {
+          console.log("👤 Aucun profil trouvé → Redirection vers /profiling-test");
         }
+        navigate("/profiling-test");
       });
 
   }, [navigate]);
 
-  return <p>Connexion avec Google en cours...</p>;
+  return (
+    <div style={{ textAlign: "center", marginTop: "50px" }}>
+      
+      <div className="spinner"></div>
+    </div>
+  );
 }
 
 export default GoogleAuthSuccess;

@@ -50,29 +50,55 @@ export async function signUpUser(data) {
 }
 
 
-//import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api/profil/';
+// =========================
+// 🔹 PROFILING (MongoDB + Gemini)
+// =========================
 
-export const APIP = axios.create({
-  baseURL: API_BASE_URL,
+// Instance pour le profil
+const API_PROFIL = axios.create({
+  baseURL: "http://localhost:8000/api/profil/",
 });
 
-APIP.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+// Ajouter automatiquement le token JWT si présent
+API_PROFIL.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-export const enregistrerReponsesProfiling = async (userId, answers) => {
-  const payload = { user_id: userId, ...answers };
-  const response = await APIP.post('enregistrer_reponses/', payload);
-  return response.data;
+// -------------------------
+// 🚀 1️⃣ START PROFILING
+// POST /api/profil/start/
+// -------------------------
+export const startProfiling = async (userId, maxQuestions = 5) => {
+  const res = await API_PROFIL.post("start/", {
+    user_id: userId,
+    max_questions: maxQuestions,
+  });
+
+  return res.data;
 };
 
-export const recupererReponsesProfiling = async (userId) => {
-  const response = await APIP.get(`recuperer_reponses/${userId}/`);
-  return response.data.reponses;
+
+
+// -------------------------
+// 🚀 2️⃣ ANSWER PROFILING
+// POST /api/profil/answer/
+// -------------------------
+export const answerProfiling = async (payload) => {
+  // { user_id, reponse, questions_reponses, max_questions }
+  const res = await API_PROFIL.post("answer/", payload);
+  return res.data;
+};
+
+
+
+// -------------------------
+// 🚀 3️⃣ GET USER PROFILE
+// GET /api/profil/recuperer/<user_id>/
+// ✅ Correction :
+export const getUserProfile = async (userId) => {
+  const res = await API_PROFIL.get(`recuperer/${userId}/`);  // ✅ Parenthèses
+  return res.data;
 };

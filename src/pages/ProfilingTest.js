@@ -3,7 +3,6 @@ import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-// Instance Axios avec token
 const APIP = axios.create({
   baseURL: "http://localhost:8000/api/profil/",
 });
@@ -19,9 +18,12 @@ export default function ProfilingTest() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [questionsReponses, setQuestionsReponses] = useState([]);
-  const [currentAnswer, setCurrentAnswer] = useState("");
-  const [currentQuestion, setCurrentQuestion] = useState("");
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [currentAnswer, setCurrentAnswer] = useState(null);
+  const [multipleAnswers, setMultipleAnswers] = useState([]);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [maxQuestions, setMaxQuestions] = useState(10);
+  const [questionType, setQuestionType] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,9 +47,15 @@ export default function ProfilingTest() {
 
   const startProfiling = async (id) => {
     try {
-      const response = await APIP.post("start/", { user_id: id, max_questions: 5 });
+      const response = await APIP.post("start/", {
+        user_id: id,
+        num_random_questions: 5
+      });
+
       setQuestionsReponses(response.data.questions_reponses || []);
-      setCurrentQuestion(response.data.next_question || "");
+      setCurrentQuestion(response.data.next_question || null);
+      setMaxQuestions(response.data.max_questions || 10);
+      setQuestionType(response.data.question_type || "fixed");
       setLoading(false);
     } catch (err) {
       console.error(err);
@@ -56,10 +64,35 @@ export default function ProfilingTest() {
     }
   };
 
+  const handleSingleChoice = (option) => {
+    setCurrentAnswer(option);
+  };
+
+  const handleMultipleChoice = (option) => {
+    setMultipleAnswers(prev => {
+      if (prev.includes(option)) {
+        return prev.filter(item => item !== option);
+      } else {
+        return [...prev, option];
+      }
+    });
+  };
+
   const submitAnswer = async () => {
-    if (!currentAnswer.trim()) {
-      alert("Veuillez répondre à la question avant de continuer !");
-      return;
+    let finalAnswer = null;
+
+    if (currentQuestion.type === "single") {
+      if (!currentAnswer) {
+        alert("Veuillez sélectionner une option !");
+        return;
+      }
+      finalAnswer = currentAnswer;
+    } else if (currentQuestion.type === "multiple") {
+      if (multipleAnswers.length === 0) {
+        alert("Veuillez sélectionner au moins une option !");
+        return;
+      }
+      finalAnswer = multipleAnswers;
     }
 
     setSubmitting(true);
@@ -67,27 +100,27 @@ export default function ProfilingTest() {
     try {
       const response = await APIP.post("answer/", {
         user_id: userId,
-        reponse: currentAnswer,
+        reponse: finalAnswer,
         questions_reponses: questionsReponses,
-        max_questions: 5,
+        max_questions: maxQuestions,
       });
 
-      // Mise à jour des questions-réponses
       setQuestionsReponses(response.data.questions_reponses || []);
-      setCurrentAnswer("");
+      setCurrentAnswer(null);
+      setMultipleAnswers([]);
 
-      // Vérification de la prochaine question
-      if (response.data.next_question && response.data.next_question.trim() !== "") {
+      if (response.data.question_type) {
+        setQuestionType(response.data.question_type);
+      }
+
+      if (response.data.next_question) {
         setCurrentQuestion(response.data.next_question);
       } else {
-        // Test terminé
         setIsCompleted(true);
-        setCurrentQuestion("");
+        setCurrentQuestion(null);
         setTimeout(() => {
-          
           navigate("/pdf-manager");
-        }, 100);
-        
+        }, 2000);
       }
     } catch (err) {
       console.error("Erreur lors de l'envoi de la réponse:", err);
@@ -97,116 +130,304 @@ export default function ProfilingTest() {
     }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !submitting) {
-      submitAnswer();
-    }
-  };
-
   if (loading) {
     return (
-      <div className="loading" style={{ textAlign: 'center', padding: '2rem' }}>
-        <p>Chargement...</p>
+      <div style={{
+        textAlign: 'center',
+        padding: '4rem',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏳</div>
+          <p style={{ fontSize: '1.2rem', color: '#666' }}>Préparation de votre test...</p>
+        </div>
       </div>
     );
   }
 
   if (!userId) {
     return (
-      <div className="error" style={{ textAlign: 'center', padding: '2rem' }}>
-        <p>Utilisateur non connecté</p>
-        <button onClick={() => navigate("/login")}>Se connecter</button>
+      <div style={{
+        textAlign: 'center',
+        padding: '2rem',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔒</div>
+        <p style={{ fontSize: '1.2rem', marginBottom: '1.5rem' }}>Utilisateur non connecté</p>
+        <button
+          onClick={() => navigate("/login")}
+          style={{
+            backgroundColor: '#007bff',
+            color: 'white',
+            padding: '0.75rem 2rem',
+            border: 'none',
+            borderRadius: '5px',
+            fontSize: '1rem',
+            cursor: 'pointer'
+          }}
+        >
+          Se connecter
+        </button>
       </div>
     );
   }
 
+  const answeredQuestionsCount = questionsReponses.filter(q => q.reponse !== null).length;
+  const progressPercentage = (answeredQuestionsCount / maxQuestions) * 100;
+
   return (
-    <div className="profiling-container" style={{ maxWidth: '600px', margin: '0 auto', padding: '2rem' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        📝 Test de Profil 
-      </h1>
-      
-      {/* Progression */}
-      <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
-        <p>Question {questionsReponses.length } / 5</p>
-        <div style={{ 
-          width: '100%', 
-          height: '10px', 
-          backgroundColor: '#e0e0e0', 
-          borderRadius: '5px',
-          overflow: 'hidden'
+    <div style={{
+      display: 'flex',
+      height: '100vh',
+      backgroundColor: '#f5f7fa',
+      position: 'relative',
+      overflowY: 'scroll'
+    }}>
+      {/* Contenu principal avec scroll */}
+      <div style={{
+        flex: 1,
+        maxWidth: '800px',
+        margin: '0 auto',
+
+
+
+
+
+      }}>
+
+
+
+
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '2rem',
+          paddingTop: '1rem'
         }}>
-          <div style={{
-            width: `${((questionsReponses.length) / 5) * 100}%`,
-            height: '100%',
-            backgroundColor: '#4caf50',
-            transition: 'width 0.3s ease'
-          }}></div>
+          <h1 style={{
+            fontSize: '2.5rem',
+            marginBottom: '0.6rem',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            📝 Test de Profil
+          </h1>
+          <p style={{ color: '#666', fontSize: '1rem' }}>
+            Aidez-nous à personnaliser votre expérience d'apprentissage
+          </p>
         </div>
+
+        {/* Question actuelle */}
+        {currentQuestion && !isCompleted && (
+          <div style={{
+            backgroundColor: '#fff',
+            padding: '2rem',
+            borderRadius: '15px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            marginBottom: '2rem'
+          }}>
+            {/* Catégorie */}
+            <div style={{
+              display: 'inline-block',
+              backgroundColor: '#f0f0f0',
+              padding: '0.5rem 1rem',
+              borderRadius: '20px',
+              fontSize: '0.85rem',
+              fontWeight: '600',
+              color: '#666',
+              marginBottom: '1rem'
+            }}>
+              {currentQuestion.category}
+            </div>
+
+            {/* Question */}
+            <h3 style={{
+              fontSize: '1.4rem',
+              marginBottom: '1.5rem',
+              lineHeight: '1.6',
+              color: '#333'
+            }}>
+              {currentQuestion.question}
+            </h3>
+
+            {/* Options */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              {currentQuestion.type === "single" ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {currentQuestion.options.map((option, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handleSingleChoice(option)}
+                      style={{
+                        padding: '1rem 1.5rem',
+                        border: currentAnswer === option ? '2px solid #667eea' : '2px solid #e0e0e0',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        backgroundColor: currentAnswer === option ? '#f0f4ff' : '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (currentAnswer !== option) {
+                          e.currentTarget.style.borderColor = '#b8c5f2';
+                          e.currentTarget.style.transform = 'translateX(5px)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (currentAnswer !== option) {
+                          e.currentTarget.style.borderColor = '#e0e0e0';
+                          e.currentTarget.style.transform = 'translateX(0)';
+                        }
+                      }}
+                    >
+                      <div style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        border: currentAnswer === option ? '6px solid #667eea' : '2px solid #ccc',
+                        transition: 'all 0.3s ease',
+                        flexShrink: 0
+                      }}></div>
+                      <span style={{ fontSize: '1rem', color: '#333' }}>{option}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div>
+                  <p style={{
+                    fontSize: '0.9rem',
+                    color: '#666',
+                    marginBottom: '1rem',
+                    fontStyle: 'italic'
+                  }}>
+                    ℹ️ Plusieurs choix possibles
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {currentQuestion.options.map((option, index) => (
+                      <div
+                        key={index}
+                        onClick={() => handleMultipleChoice(option)}
+                        style={{
+                          padding: '1rem 1.5rem',
+                          border: multipleAnswers.includes(option) ? '2px solid #667eea' : '2px solid #e0e0e0',
+                          borderRadius: '10px',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          backgroundColor: multipleAnswers.includes(option) ? '#f0f4ff' : '#fff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '1rem'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!multipleAnswers.includes(option)) {
+                            e.currentTarget.style.borderColor = '#b8c5f2';
+                            e.currentTarget.style.transform = 'translateX(5px)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!multipleAnswers.includes(option)) {
+                            e.currentTarget.style.borderColor = '#e0e0e0';
+                            e.currentTarget.style.transform = 'translateX(0)';
+                          }
+                        }}
+                      >
+                        <div style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '4px',
+                          border: multipleAnswers.includes(option) ? 'none' : '2px solid #ccc',
+                          backgroundColor: multipleAnswers.includes(option) ? '#667eea' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'all 0.3s ease',
+                          flexShrink: 0
+                        }}>
+                          {multipleAnswers.includes(option) && (
+                            <span style={{ color: 'white', fontSize: '0.9rem', fontWeight: 'bold' }}>✓</span>
+                          )}
+                        </div>
+                        <span style={{ fontSize: '1rem', color: '#333' }}>{option}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Bouton */}
+            <button
+              onClick={submitAnswer}
+              disabled={submitting || (!currentAnswer && multipleAnswers.length === 0)}
+              style={{
+                width: '100%',
+                background: submitting || (!currentAnswer && multipleAnswers.length === 0)
+                  ? '#e0e0e0'
+                  : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: submitting || (!currentAnswer && multipleAnswers.length === 0) ? '#999' : 'white',
+                padding: '1rem 2rem',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '1.1rem',
+                fontWeight: '600',
+                cursor: submitting || (!currentAnswer && multipleAnswers.length === 0) ? 'not-allowed' : 'pointer',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                boxShadow: submitting || (!currentAnswer && multipleAnswers.length === 0)
+                  ? 'none'
+                  : '0 4px 15px rgba(102, 126, 234, 0.4)'
+              }}
+              onMouseEnter={(e) => {
+                if (!submitting && (currentAnswer || multipleAnswers.length > 0)) {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.5)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = submitting || (!currentAnswer && multipleAnswers.length === 0)
+                  ? 'none'
+                  : '0 4px 15px rgba(102, 126, 234, 0.4)';
+              }}
+            >
+              {submitting ? '⏳ Envoi en cours...' : '✓ Valider ma réponse'}
+            </button>
+          </div>
+        )}
+
+        {/* Message de fin */}
+        {isCompleted && (
+          <div style={{
+            textAlign: 'center',
+            padding: '3rem',
+            backgroundColor: '#d4edda',
+            border: '2px solid #c3e6cb',
+            borderRadius: '15px'
+          }}>
+            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎉</div>
+            <h2 style={{
+              color: '#155724',
+              marginBottom: '1rem',
+              fontSize: '2rem'
+            }}>
+              Profil complété avec succès !
+            </h2>
+            <p style={{ color: '#155724', fontSize: '1.1rem' }}>
+              Merci d'avoir pris le temps de répondre à toutes les questions.
+            </p>
+          </div>
+        )}
       </div>
 
-      
-
-      {/* Question actuelle */}
-      {currentQuestion && !isCompleted && (
-        <div className="question-card" style={{ 
-          backgroundColor: '#fff', 
-          padding: '2rem', 
-          borderRadius: '10px', 
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          marginBottom: '2rem'
-        }}>
-          <h3 style={{ marginBottom: '1rem' }}>Question actuelle :</h3>
-          <p style={{ fontSize: '1.1rem', marginBottom: '1.5rem' }}>{currentQuestion}</p>
-          
-          <textarea
-            value={currentAnswer}
-            onChange={(e) => setCurrentAnswer(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Tapez votre réponse ici..."
-            style={{
-              width: '100%',
-              minHeight: '100px',
-              padding: '1rem',
-              border: '2px solid #ddd',
-              borderRadius: '5px',
-              fontSize: '1rem',
-              marginBottom: '1rem',
-              resize: 'vertical'
-            }}
-          />
-          
-          <button 
-            onClick={submitAnswer}
-            disabled={submitting || !currentAnswer.trim()}
-            className="submit-btn"
-            style={{
-              backgroundColor: submitting || !currentAnswer.trim() ? '#ccc' : '#007bff',
-              color: 'white',
-              padding: '0.75rem 2rem',
-              border: 'none',
-              borderRadius: '5px',
-              fontSize: '1rem',
-              cursor: submitting || !currentAnswer.trim() ? 'not-allowed' : 'pointer'
-            }}
-          >
-            {submitting ? 'Envoi...' : 'Envoyer'}
-          </button>
-        </div>
-      )}
-
-      {/* Message de fin */}
-      {isCompleted && (
-        <div style={{ 
-          textAlign: 'center', 
-          padding: '2rem',
-          backgroundColor: '#d4edda',
-          border: '1px solid #c3e6cb',
-          borderRadius: '10px'
-        }}>
-          
-        </div>
-      )}
+      {/* Barre de progression verticale à droite - SUPPRIMÉE */}
     </div>
   );
 }

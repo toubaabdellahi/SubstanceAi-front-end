@@ -6,7 +6,7 @@ export function ProtectedRoute({ children }) {
 
   if (!token) {
     // pas de token -> rediriger vers login
-    return <Navigate to="/sign-up" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // ici, tu peux aussi ajouter une vérification de validité du token JWT si tu veux
