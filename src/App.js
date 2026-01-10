@@ -5,7 +5,7 @@ import Login from "./pages/Login";
 import Home from "./pages/Home";
 import ProtectedRoute from "./ProtectedRoute";
 import GoogleAuthSuccess from "./pages/GoogleAuthSuccess";
-import ProfilingTest from './pages/ProfilingTest';
+import ProfilingTest from "./pages/ProfilingTest";
 import PdfManager from "./pages/PdfManager";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -18,14 +18,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/google-auth-success" element={<GoogleAuthSuccess />} />
           <Route path="/profiling-test" element={<ProfilingTest />} />
-          <Route
-            path="/home"
-            element={
-              <ProtectedRoute>
-                <Home />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/" element={<Home />} />
+          <Route path="/home" element={<Home />} />
           <Route
             path="/pdf-manager"
             element={

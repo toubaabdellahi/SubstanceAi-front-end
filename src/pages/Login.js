@@ -325,9 +325,6 @@ export default function Login() {
         //  Stocker le token JWT dans localStorage
         localStorage.setItem("token", result.token);
 
-        // //  Rediriger vers /home
-        // navigate("/home");
-
         //  Rediriger vers /pdf-manager
         navigate("/pdf-manager");
       } else {
