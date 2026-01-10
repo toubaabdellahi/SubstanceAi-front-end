@@ -18,7 +18,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/google-auth-success" element={<GoogleAuthSuccess />} />
           <Route path="/profiling-test" element={<ProfilingTest />} />
-          <Route path="/" element={<Home />} />
+          {/* <Route path="/" element={<Home />} /> */}
           <Route path="/home" element={<Home />} />
           <Route
             path="/pdf-manager"
@@ -28,7 +28,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/" element={<Login />} />
+          <Route path="/" element={<Home />} />
         </Routes>
       </BrowserRouter>
     </ErrorBoundary>
