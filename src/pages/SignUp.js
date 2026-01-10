@@ -398,8 +398,6 @@ export default function SignUp() {
         return;
       }
 
-      const result = await res.json();
-
       // Supposons que ton backend renvoie un token JWT dans result.token
       const token = result.token;
       if (token) {
