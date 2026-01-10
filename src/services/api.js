@@ -5,7 +5,6 @@ const API = axios.create({
   withCredentials: true,
 });
 
-
 // export des loginUser et signUpUser avec fetch ici...
 
 // export const loginUser = async (credentials) => {
@@ -49,8 +48,6 @@ export async function signUpUser(data) {
   }
 }
 
-
-
 // =========================
 // 🔹 PROFILING (MongoDB + Gemini)
 // =========================
@@ -80,8 +77,6 @@ export const startProfiling = async (userId, maxQuestions = 5) => {
   return res.data;
 };
 
-
-
 // -------------------------
 // 🚀 2️⃣ ANSWER PROFILING
 // POST /api/profil/answer/
@@ -92,13 +87,30 @@ export const answerProfiling = async (payload) => {
   return res.data;
 };
 
-
-
 // -------------------------
 // 🚀 3️⃣ GET USER PROFILE
 // GET /api/profil/recuperer/<user_id>/
 // ✅ Correction :
 export const getUserProfile = async (userId) => {
-  const res = await API_PROFIL.get(`recuperer/${userId}/`);  // ✅ Parenthèses
+  const res = await API_PROFIL.get(`recuperer/${userId}/`); // ✅ Parenthèses
   return res.data;
+};
+
+// =========================
+
+export const uploadPDF = async (formData) => {
+  const response = await API.post("/auth/upload-pdf/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data; // { file_ids: [] }
+};
+
+export const askModel = async (message, fileIds) => {
+  const response = await API.post("/ask/", {
+    message: message,
+    file_ids: fileIds,
+  });
+  return response.data; // { answer, sources }
 };

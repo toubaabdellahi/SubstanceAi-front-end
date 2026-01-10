@@ -87,11 +87,15 @@ function PdfManager() {
 
     try {
       setLoading(true);
-      const response = await axios.post("http://localhost:8000/api/auth/upload-pdf/", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await axios.post(
+        "http://localhost:8000/api/auth/upload-pdf/",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       const newChatItem = {
         id: response.data.file_ids[0], // Utilise l'ObjectId retourné par le backend
@@ -135,7 +139,9 @@ function PdfManager() {
     try {
       // Validation de l'ID
       if (!fileId || !/^[0-9a-f]{24}$/i.test(fileId)) {
-        throw new Error(`ID ${fileId} invalide - Format MongoDB requis (24 caractères hexadécimaux)`);
+        throw new Error(
+          `ID ${fileId} invalide - Format MongoDB requis (24 caractères hexadécimaux)`
+        );
       }
 
       const response = await axios.get(
@@ -148,7 +154,8 @@ function PdfManager() {
 
       // Extraction du nom de fichier
       const contentDisposition = response.headers["content-disposition"];
-      const finalFileName = fileName ||
+      const finalFileName =
+        fileName ||
         (contentDisposition
           ? contentDisposition.split("filename=")[1].replace(/"/g, "")
           : `document_${fileId.slice(-6)}.pdf`);
@@ -218,7 +225,11 @@ function PdfManager() {
           <Typography variant="subtitle1" sx={{ mr: 2 }}>
             {userName}
           </Typography>
-          <IconButton color="inherit" onClick={logout} sx={{ color: "#000000" }}>
+          <IconButton
+            color="inherit"
+            onClick={logout}
+            sx={{ color: "#000000" }}
+          >
             <LogoutIcon />
           </IconButton>
         </Toolbar>
