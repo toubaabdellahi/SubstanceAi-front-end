@@ -105,7 +105,7 @@ export const getUserProfile = async (userId) => {
 // =========================
 
 export const uploadPDF = async (formData) => {
-  const response = await API.post("/auth/upload-pdf/", formData, {
+  const response = await API.post("/upload-pdf/", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -113,10 +113,10 @@ export const uploadPDF = async (formData) => {
   return response.data; // { file_ids: [] }
 };
 
-export const askModel = async (message, fileIds) => {
-  const response = await API.post("/ask/", {
-    message: message,
-    file_ids: fileIds,
-  });
-  return response.data; // { answer, sources }
-};
+// export const askModel = async (message, fileIds) => {
+//   const response = await API.post("/ask/", {
+//     message: message,
+//     file_ids: fileIds,
+//   });
+//   return response.data; // { answer, sources }
+// };
