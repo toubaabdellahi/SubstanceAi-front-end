@@ -106,34 +106,34 @@
 //         }
 //       );
 
-//       if (!res.ok) {
-//         const errorData = await res.json();
-//         alert(errorData.error || "Erreur lors de l'inscription.");
-//         return;
-//       }
-
-//       const result = await res.json();
-
-//       // Supposons que ton backend renvoie un token JWT dans result.token
-//       const token = result.token;
-//       if (token) {
-//         // Stockage du token JWT côté client (ici localStorage)
-//         localStorage.setItem("token", token);
-
-//         // Optionnel : tu peux aussi stocker les infos utilisateur
-//         localStorage.setItem("user", JSON.stringify(result.user));
-
-//         // Redirection après inscription
-//         navigate("/profiling-test");
-
-//         //navigate("/pdf-manager");
-//       } else {
-//         alert("Inscription réussie mais pas de token reçu.");
-//       }
-//     } catch (error) {
-//       alert("Erreur réseau ou serveur.");
+//     if (!res.ok) {
+//       const errorData = await res.json();
+//       alert(errorData.error || "Erreur lors de l'inscription.");
+//       return;
 //     }
-//   };
+
+//     const result = await res.json();
+
+//     // Supposons que ton backend renvoie un token JWT dans result.token
+//     const token = result.token;
+//     if (token) {
+//       // Stockage du token JWT côté client (ici localStorage)
+//       localStorage.setItem("token", token);
+
+//       // Optionnel : tu peux aussi stocker les infos utilisateur
+//       localStorage.setItem("user", JSON.stringify(result.user));
+
+//       // Redirection après inscription
+//       navigate("/profiling-test");
+
+//       //navigate("/pdf-manager");
+//     } else {
+//       alert("Inscription réussie mais pas de token reçu.");
+//     }
+//   } catch (error) {
+//     alert("Erreur réseau ou serveur.");
+//   }
+// };
 
 //   return (
 //     <>
@@ -392,14 +392,32 @@ export default function SignUp() {
         }
       );
       const result = await res.json();
-      if (res.ok && result.token) {
-        localStorage.setItem("token", result.token);
+      if (!res.ok) {
+        const errorData = await res.json();
+        alert(errorData.error || "Erreur lors de l'inscription.");
+        return;
+      }
+
+      const result = await res.json();
+
+      // Supposons que ton backend renvoie un token JWT dans result.token
+      const token = result.token;
+      if (token) {
+        // Stockage du token JWT côté client (ici localStorage)
+        localStorage.setItem("token", token);
+
+        // Optionnel : tu peux aussi stocker les infos utilisateur
+        localStorage.setItem("user", JSON.stringify(result.user));
+
+        // Redirection après inscription
         navigate("/profiling-test");
+
+        //navigate("/pdf-manager");
       } else {
-        alert(result.error || "Erreur d'inscription.");
+        alert("Inscription réussie mais pas de token reçu.");
       }
     } catch (error) {
-      alert("Erreur serveur.");
+      alert("Erreur réseau ou serveur.");
     }
   };
 

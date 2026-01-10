@@ -85,30 +85,30 @@
 //         }
 //       );
 
-//       if (!res.ok) {
-//         const errorData = await res.json();
-//         alert(errorData.error || "Erreur de connexion");
-//         return;
-//       }
-
-//       const result = await res.json();
-
-//       if (result.token) {
-//         //  Stocker le token JWT dans localStorage
-//         localStorage.setItem("token", result.token);
-
-//         //  Rediriger vers /home
-//         navigate("/home");
-
-//         //  Rediriger vers /pdf-manager
-//         navigate("/pdf-manager");
-//       } else {
-//         alert("Token non reçu depuis le serveur !");
-//       }
-//     } catch (error) {
-//       alert("Erreur réseau ou serveur.");
+//     if (!res.ok) {
+//       const errorData = await res.json();
+//       alert(errorData.error || "Erreur de connexion");
+//       return;
 //     }
-//   };
+
+//     const result = await res.json();
+
+//     if (result.token) {
+//       //  Stocker le token JWT dans localStorage
+//       localStorage.setItem("token", result.token);
+
+//       //  Rediriger vers /home
+//       navigate("/home");
+
+//       //  Rediriger vers /pdf-manager
+//       navigate("/pdf-manager");
+//     } else {
+//       alert("Token non reçu depuis le serveur !");
+//     }
+//   } catch (error) {
+//     alert("Erreur réseau ou serveur.");
+//   }
+// };
 
 //   return (
 //     <>
@@ -320,9 +320,16 @@ export default function Login() {
       }
 
       const result = await res.json();
+
       if (result.token) {
+        //  Stocker le token JWT dans localStorage
         localStorage.setItem("token", result.token);
-        navigate("/home"); // Redirection principale
+
+        //  Rediriger vers /home
+        navigate("/home");
+
+        //  Rediriger vers /pdf-manager
+        navigate("/pdf-manager");
       } else {
         alert("Token non reçu depuis le serveur !");
       }
