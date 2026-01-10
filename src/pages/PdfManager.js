@@ -88,7 +88,7 @@ function PdfManager() {
     try {
       setLoading(true);
       const response = await axios.post(
-        "http://localhost:8000/api/auth/upload-pdf/",
+        "https://substanceai-back-end.onrender.com/api/auth/upload-pdf/",
         formData,
         {
           headers: {
@@ -145,7 +145,7 @@ function PdfManager() {
       }
 
       const response = await axios.get(
-        `http://localhost:8000/api/auth/download_pdf/${fileId}/`,
+        `https://substanceai-back-end.onrender.com/api/auth/download_pdf/${fileId}/`,
         {
           responseType: "blob",
           timeout: 10000,

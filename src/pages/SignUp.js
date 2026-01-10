@@ -28,7 +28,8 @@ export default function SignUp() {
   const [usernameErrorMessage, setUsernameErrorMessage] = useState("");
   const GOOGLE_CLIENT_ID =
     "76497721292-2fmahu68t6r2vaiupdmq6rbbtqsm3jq5.apps.googleusercontent.com";
-  const REDIRECT_URI = "http://localhost:8000/api/auth/login/google/callback/";
+  const REDIRECT_URI =
+    "https://substanceai-back-end.onrender.com/api/auth/login/google/callback/";
   //const REDIRECT_URI = "http://localhost:3000/auth/google/callback";
   const googleLoginUrl =
     `https://accounts.google.com/o/oauth2/auth?` +
@@ -96,11 +97,14 @@ export default function SignUp() {
     };
 
     try {
-      const res = await fetch("http://localhost:8000/api/auth/register/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        "https://substanceai-back-end.onrender.com/api/auth/register/",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (!res.ok) {
         const errorData = await res.json();

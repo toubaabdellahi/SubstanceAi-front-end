@@ -24,7 +24,8 @@ export default function Login() {
 
   const GOOGLE_CLIENT_ID =
     "76497721292-2fmahu68t6r2vaiupdmq6rbbtqsm3jq5.apps.googleusercontent.com";
-  const REDIRECT_URI = "http://localhost:8000/api/auth/login/google/callback/";
+  const REDIRECT_URI =
+    "https://substanceai-back-end.onrender.com/api/auth/login/google/callback/";
 
   const googleLoginUrl =
     `https://accounts.google.com/o/oauth2/auth?` +
@@ -74,12 +75,15 @@ export default function Login() {
     };
 
     try {
-      const res = await fetch("http://localhost:8000/api/auth/login/", {
-        method: "POST",
-        credentials: "include", // Inclure les cookies si nécessaires
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        "https://substanceai-back-end.onrender.com/api/auth/login/",
+        {
+          method: "POST",
+          credentials: "include", // Inclure les cookies si nécessaires
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (!res.ok) {
         const errorData = await res.json();
@@ -92,7 +96,7 @@ export default function Login() {
       if (result.token) {
         //  Stocker le token JWT dans localStorage
         localStorage.setItem("token", result.token);
-        
+
         //  Rediriger vers /home
         navigate("/home");
 
@@ -105,7 +109,7 @@ export default function Login() {
       alert("Erreur réseau ou serveur.");
     }
   };
- 
+
   return (
     <>
       <CssBaseline />

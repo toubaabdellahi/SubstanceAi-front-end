@@ -1,7 +1,7 @@
 // src/services/api.js
 import axios from "axios";
 const API = axios.create({
-  baseURL: "http://localhost:8000/api/auth",
+  baseURL: "https://substanceai-back-end.onrender.com/api/auth/",
   withCredentials: true,
 });
 
@@ -12,13 +12,16 @@ const API = axios.create({
 //   return response.data;
 // };
 export const loginUser = async (payload) => {
-  const response = await fetch("http://localhost:8000/api/auth/login/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+  const response = await fetch(
+    "https://substanceai-back-end.onrender.com/api/auth/login/",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    }
+  );
 
   if (!response.ok) {
     throw await response.json();
@@ -28,14 +31,17 @@ export const loginUser = async (payload) => {
 };
 export async function signUpUser(data) {
   try {
-    const res = await fetch("http://localhost:8000/api/auth/register/", {
-      method: "POST",
-      credentials: "include", // pour envoyer les cookies (utile si tu configures des sessions côté backend)
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
+    const res = await fetch(
+      "https://substanceai-back-end.onrender.com/api/auth/register/",
+      {
+        method: "POST",
+        credentials: "include", // pour envoyer les cookies (utile si tu configures des sessions côté backend)
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
 
     if (!res.ok) {
       const errorData = await res.json();
@@ -54,7 +60,7 @@ export async function signUpUser(data) {
 
 // Instance pour le profil
 const API_PROFIL = axios.create({
-  baseURL: "http://localhost:8000/api/profil/",
+  baseURL: "https://substanceai-back-end.onrender.com/api/profil/",
 });
 
 // Ajouter automatiquement le token JWT si présent
