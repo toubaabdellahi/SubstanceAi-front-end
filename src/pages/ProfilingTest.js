@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const APIP = axios.create({
-  baseURL: "https://substanceai-back-end.onrender.com//api/profil/",
+  baseURL: "https://substanceai-back-end.onrender.com/api/profil/",
 });
 
 APIP.interceptors.request.use((config) => {

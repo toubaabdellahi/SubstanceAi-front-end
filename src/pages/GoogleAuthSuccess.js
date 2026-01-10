@@ -40,13 +40,14 @@ function GoogleAuthSuccess() {
     getUserProfile(userId)
       .then((response) => {
         console.log("Profil récupéré :", response);
-        
+
         // ✅ Vérifier si le profil est complet (5 questions répondues)
-        const isComplete = response.is_complete || 
-                          (response.questions_reponses && 
-                           response.questions_reponses.length >= 5 &&
-                           response.questions_reponses.every(q => q.reponse));
-        
+        const isComplete =
+          response.is_complete ||
+          (response.questions_reponses &&
+            response.questions_reponses.length >= 5 &&
+            response.questions_reponses.every((q) => q.reponse));
+
         if (isComplete) {
           console.log("✅ Profil complet → Redirection vers /home");
           navigate("/pdf-manager");
@@ -57,19 +58,19 @@ function GoogleAuthSuccess() {
       })
       .catch((error) => {
         console.error("Erreur lors de la récupération du profil :", error);
-        
+
         // Si le profil n'existe pas (404) ou erreur → test de profiling
         if (error.response?.status === 404) {
-          console.log("👤 Aucun profil trouvé → Redirection vers /profiling-test");
+          console.log(
+            "👤 Aucun profil trouvé → Redirection vers /profiling-test"
+          );
         }
         navigate("/profiling-test");
       });
-
   }, [navigate]);
 
   return (
     <div style={{ textAlign: "center", marginTop: "50px" }}>
-      
       <div className="spinner"></div>
     </div>
   );
