@@ -1217,7 +1217,7 @@ import {
 // --- STYLED COMPONENTS ---
 const MainContainer = styled(Box)(({ theme }) => ({
   display: "flex",
-  height: "100vh",
+  height: "auto",
   backgroundColor: "#f0f2f9",
   padding: "12px",
   gap: "12px",
@@ -1277,9 +1277,9 @@ const StudioCard = styled(Button)(({ bgcolor }) => ({
   textTransform: "none",
 
   // --- FORCE LA TAILLE IDENTIQUE ---
-  width: "180%", // Largeur totale
+  width: "100%", // Largeur totale
   //minWidth: "100%",        // Sécurité pour la largeur
-  height: "64px", // Hauteur fixe
+  height: "auto", // Hauteur fixe
   // ---------------------------------
 
   backgroundColor: bgcolor || "#f8f9fa",
