@@ -394,7 +394,7 @@ export default function SignUp() {
       const result = await res.json();
       if (!res.ok) {
         const errorData = await res.json();
-        alert(errorData.message || "Erreur lors de l'inscription.");
+        alert(result.message || "Erreur lors de l'inscription.");
         return;
       }
 
