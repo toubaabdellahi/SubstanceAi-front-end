@@ -581,10 +581,598 @@
 
 // export default PdfManager;
 
+// import React, { useState, useRef, useEffect } from "react";
+// import axios from "axios";
+// import { useNavigate } from "react-router-dom"; // Import pour la redirection
+// import { jwtDecode } from "jwt-decode";
+// import {
+//   Box,
+//   IconButton,
+//   CircularProgress,
+//   Paper,
+//   Typography,
+//   styled,
+//   CssBaseline,
+//   Avatar,
+//   Button,
+//   Grid,
+//   InputBase,
+//   Tooltip,
+//   Fade,
+//   Snackbar,
+//   Alert,
+// } from "@mui/material";
+// import {
+//   Add as AddIcon,
+//   SmartToy as RobotIcon,
+//   Person as UserIcon,
+//   Description as PdfIcon,
+//   AutoAwesome as MagicIcon,
+//   MenuBook as QuizIcon,
+//   Hub as MindMapIcon,
+//   Style as FlashcardIcon,
+//   Share as ShareIcon,
+//   Send as SendIcon,
+//   ChatBubbleOutline as ChatIcon,
+//   AddComment as NewChatIcon,
+//   DeleteOutline as DeleteIcon,
+//   ChevronLeft as ChevronLeftIcon,
+//   ChevronRight as ChevronRightIcon,
+//   Logout as LogoutIcon, // Import de l'icône de déconnexion
+// } from "@mui/icons-material";
+
+// // --- STYLED COMPONENTS ---
+// const MainContainer = styled(Box)({
+//   display: "flex",
+//   height: "100vh",
+//   backgroundColor: "#f0f2f9",
+//   padding: "12px",
+//   gap: "12px",
+// });
+
+// const ColumnPaper = styled(Paper)({
+//   height: "100%",
+//   borderRadius: "24px",
+//   display: "flex",
+//   flexDirection: "column",
+//   backgroundColor: "#ffffff",
+//   border: "1px solid #e0e4f0",
+//   boxShadow: "none",
+//   overflow: "hidden",
+// });
+
+// const HistoryItem = styled(Button)(({ active }) => ({
+//   justifyContent: "flex-start",
+//   textTransform: "none",
+//   width: "100%",
+//   padding: "12px 16px",
+//   borderRadius: "14px",
+//   marginBottom: "6px",
+//   color: active ? "#1a73e8" : "#5f6368",
+//   backgroundColor: active ? "#e8f0fe" : "transparent",
+//   transition: "all 0.2s ease",
+//   "&:hover": {
+//     backgroundColor: active ? "#d2e3fc" : "#f1f3f4",
+//     "& .delete-icon": { opacity: 1 },
+//   },
+//   "& .MuiTypography-root": {
+//     fontSize: "0.85rem",
+//     fontWeight: active ? 600 : 500,
+//     textAlign: "left",
+//     overflow: "hidden",
+//     textOverflow: "ellipsis",
+//     whiteSpace: "nowrap",
+//   },
+// }));
+
+// const StudioCard = styled(Button)(({ bgcolor }) => ({
+//   display: "flex",
+//   flexDirection: "row",
+//   justifyContent: "flex-start",
+//   padding: "14px",
+//   borderRadius: "14px",
+//   textTransform: "none",
+//   width: "100%",
+//   backgroundColor: bgcolor || "#f8f9fa",
+//   border: "1px solid #f0f0f0",
+//   color: "#3c4043",
+//   gap: "12px",
+//   "&:hover": { opacity: 0.9, backgroundColor: bgcolor },
+// }));
+
+// function PdfManager() {
+//   const navigate = useNavigate();
+
+//   // --- ÉTATS PERSISTANTS ---
+//   const [conversations, setConversations] = useState(() => {
+//     const saved = localStorage.getItem("notebook_history");
+//     return saved
+//       ? JSON.parse(saved)
+//       : [{ id: "1", title: "Ma première note", history: [], sources: [] }];
+//   });
+//   const [activeChatId, setActiveChatId] = useState(conversations[0]?.id || "1");
+
+//   const [message, setMessage] = useState("");
+//   const [loading, setLoading] = useState(false);
+//   const [showHistory, setShowHistory] = useState(true);
+//   const [openSnackbar, setOpenSnackbar] = useState(false);
+//   const scrollRef = useRef(null);
+
+//   const userName = localStorage.getItem("userName") || "User";
+
+//   useEffect(() => {
+//     localStorage.setItem("notebook_history", JSON.stringify(conversations));
+//     if (scrollRef.current)
+//       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+//   }, [conversations]);
+
+//   const currentChat =
+//     conversations.find((c) => c.id === activeChatId) || conversations[0];
+
+//   // --- LOGIQUE ACTIONS ---
+
+//   const handleLogout = () => {
+//     localStorage.removeItem("token");
+//     localStorage.removeItem("userName");
+//     // Optionnel : localStorage.removeItem("notebook_history"); si vous voulez vider l'historique au logout
+//     navigate("/"); // Redirige vers la page d'accueil
+//   };
+
+//   const handleShare = () => {
+//     navigator.clipboard.writeText(window.location.href);
+//     setOpenSnackbar(true);
+//   };
+
+//   const createNewChat = () => {
+//     const newId = Date.now().toString();
+//     const newChat = {
+//       id: newId,
+//       title: "Nouveau Chat",
+//       history: [],
+//       sources: [],
+//     };
+//     setConversations([newChat, ...conversations]);
+//     setActiveChatId(newId);
+//   };
+
+//   const deleteChat = (e, id) => {
+//     e.stopPropagation();
+//     const filtered = conversations.filter((c) => c.id !== id);
+//     if (filtered.length === 0) {
+//       setConversations([
+//         {
+//           id: Date.now().toString(),
+//           title: "Nouveau Chat",
+//           history: [],
+//           sources: [],
+//         },
+//       ]);
+//     } else {
+//       setConversations(filtered);
+//       if (activeChatId === id) setActiveChatId(filtered[0].id);
+//     }
+//   };
+
+//   const handleFileChange = (e) => {
+//     const files = Array.from(e.target.files);
+//     if (files.length === 0) return;
+//     const newSources = files.map((f) => ({
+//       name: f.name,
+//       id: Date.now() + Math.random(),
+//     }));
+
+//     setConversations((prev) =>
+//       prev.map((chat) =>
+//         chat.id === activeChatId
+//           ? { ...chat, sources: [...chat.sources, ...newSources] }
+//           : chat
+//       )
+//     );
+//   };
+
+//   const handleSend = async () => {
+//     if (!message.trim()) return;
+
+//     const userMsg = {
+//       id: Date.now(),
+//       text: message,
+//       isUser: true,
+//       timestamp: new Date().toLocaleTimeString(),
+//     };
+
+//     setConversations((prev) =>
+//       prev.map((chat) => {
+//         if (chat.id === activeChatId) {
+//           const isFirst = chat.history.length === 0;
+//           return {
+//             ...chat,
+//             history: [...chat.history, userMsg],
+//             title: isFirst
+//               ? message.length > 20
+//                 ? message.substring(0, 20) + "..."
+//                 : message
+//               : chat.title,
+//           };
+//         }
+//         return chat;
+//       })
+//     );
+
+//     setLoading(true);
+//     const textToSend = message;
+//     setMessage("");
+
+//     try {
+//       const res = await axios.post("http://localhost:8000/api/ask/", {
+//         message: textToSend,
+//       });
+//       const botMsg = {
+//         id: Date.now() + 1,
+//         answer: res.data.answer,
+//         isUser: false,
+//         timestamp: new Date().toLocaleTimeString(),
+//       };
+
+//       setConversations((prev) =>
+//         prev.map((chat) =>
+//           chat.id === activeChatId
+//             ? { ...chat, history: [...chat.history, botMsg] }
+//             : chat
+//         )
+//       );
+//     } catch (err) {
+//       console.error(err);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   return (
+//     <MainContainer>
+//       <CssBaseline />
+
+//       {/* --- COLONNE GAUCHE : HISTORIQUE, SOURCES ET LOGOUT --- */}
+//       <Box
+//         sx={{
+//           width: showHistory ? "300px" : "80px",
+//           transition: "width 0.3s ease",
+//           display: "flex",
+//           flexDirection: "column",
+//           gap: 2,
+//         }}
+//       >
+//         <ColumnPaper sx={{ flex: 1, p: 2 }}>
+//           <Box
+//             sx={{
+//               display: "flex",
+//               justifyContent: "space-between",
+//               alignItems: "center",
+//               mb: 2,
+//             }}
+//           >
+//             {showHistory && (
+//               <Typography
+//                 variant="subtitle2"
+//                 sx={{ fontWeight: 800, color: "#5f6368" }}
+//               >
+//                 NOTEBOOKS
+//               </Typography>
+//             )}
+//             <IconButton onClick={() => setShowHistory(!showHistory)}>
+//               {showHistory ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+//             </IconButton>
+//           </Box>
+
+//           {showHistory && (
+//             <>
+//               <Button
+//                 fullWidth
+//                 startIcon={<NewChatIcon />}
+//                 onClick={createNewChat}
+//                 sx={{
+//                   mb: 3,
+//                   borderRadius: "12px",
+//                   py: 1.2,
+//                   textTransform: "none",
+//                   bgcolor: "#1a73e8",
+//                   color: "white",
+//                   "&:hover": { bgcolor: "#1765cc" },
+//                 }}
+//               >
+//                 Nouveau Chat
+//               </Button>
+
+//               <Box sx={{ flex: 1, overflowY: "auto", mb: 2 }}>
+//                 {conversations.map((chat) => (
+//                   <HistoryItem
+//                     key={chat.id}
+//                     active={chat.id === activeChatId}
+//                     onClick={() => setActiveChatId(chat.id)}
+//                     startIcon={<ChatIcon fontSize="small" />}
+//                   >
+//                     <Typography variant="body2" sx={{ flex: 1 }}>
+//                       {chat.title}
+//                     </Typography>
+//                     <IconButton
+//                       className="delete-icon"
+//                       size="small"
+//                       sx={{ opacity: 0, p: 0 }}
+//                       onClick={(e) => deleteChat(e, chat.id)}
+//                     >
+//                       <DeleteIcon sx={{ fontSize: 16 }} />
+//                     </IconButton>
+//                   </HistoryItem>
+//                 ))}
+//               </Box>
+
+//               <Box sx={{ borderTop: "1px solid #eee", pt: 2, mb: 2 }}>
+//                 <Typography
+//                   variant="caption"
+//                   sx={{
+//                     fontWeight: 700,
+//                     color: "#5f6368",
+//                     mb: 1,
+//                     display: "block",
+//                   }}
+//                 >
+//                   SOURCES
+//                 </Typography>
+//                 <Button
+//                   fullWidth
+//                   variant="outlined"
+//                   size="small"
+//                   startIcon={<AddIcon />}
+//                   onClick={() => document.getElementById("file-input").click()}
+//                   sx={{ borderRadius: "10px", textTransform: "none", mb: 2 }}
+//                 >
+//                   Ajouter PDF
+//                 </Button>
+//                 <input
+//                   id="file-input"
+//                   type="file"
+//                   hidden
+//                   multiple
+//                   onChange={handleFileChange}
+//                 />
+
+//                 <Box sx={{ maxHeight: "150px", overflowY: "auto" }}>
+//                   {currentChat.sources.map((s) => (
+//                     <Box
+//                       key={s.id}
+//                       sx={{
+//                         display: "flex",
+//                         alignItems: "center",
+//                         gap: 1,
+//                         p: 1,
+//                         bgcolor: "#f8f9fa",
+//                         borderRadius: "8px",
+//                         mb: 0.5,
+//                       }}
+//                     >
+//                       <PdfIcon sx={{ fontSize: 16, color: "#ea4335" }} />
+//                       <Typography
+//                         variant="caption"
+//                         noWrap
+//                         sx={{ fontWeight: 500 }}
+//                       >
+//                         {s.name}
+//                       </Typography>
+//                     </Box>
+//                   ))}
+//                 </Box>
+//               </Box>
+
+//               {/* BOUTON DÉCONNEXION (Positionné en bas du menu) */}
+//               <Box sx={{ borderTop: "1px solid #eee", pt: 2 }}>
+//                 <Button
+//                   fullWidth
+//                   startIcon={<LogoutIcon />}
+//                   onClick={handleLogout}
+//                   sx={{
+//                     justifyContent: "flex-start",
+//                     borderRadius: "12px",
+//                     color: "#d32f2f", // Rouge pour l'alerte
+//                     textTransform: "none",
+//                     fontWeight: 600,
+//                     "&:hover": { bgcolor: "#fdecea" },
+//                   }}
+//                 >
+//                   Déconnexion
+//                 </Button>
+//               </Box>
+//             </>
+//           )}
+//         </ColumnPaper>
+//       </Box>
+
+//       {/* --- COLONNE CENTRALE : CHAT --- */}
+//       <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+//         <ColumnPaper>
+//           <Box
+//             sx={{
+//               p: 2,
+//               display: "flex",
+//               alignItems: "center",
+//               borderBottom: "1px solid #f1f3f4",
+//             }}
+//           >
+//             <Typography
+//               variant="h6"
+//               sx={{ flexGrow: 1, fontWeight: 600, color: "#202124" }}
+//             >
+//               {currentChat.title}
+//             </Typography>
+
+//             <Tooltip title="Partager le lien">
+//               <IconButton onClick={handleShare} sx={{ mr: 1 }}>
+//                 <ShareIcon fontSize="small" />
+//               </IconButton>
+//             </Tooltip>
+
+//             <Avatar sx={{ width: 34, height: 34, bgcolor: "#00796b" }}>
+//               {userName[0]}
+//             </Avatar>
+//           </Box>
+
+//           <Box
+//             ref={scrollRef}
+//             sx={{
+//               flex: 1,
+//               p: 3,
+//               overflowY: "auto",
+//               display: "flex",
+//               flexDirection: "column",
+//               gap: 3,
+//             }}
+//           >
+//             {currentChat.history.length === 0 && (
+//               <Box sx={{ textAlign: "center", mt: 10, opacity: 0.5 }}>
+//                 <MagicIcon sx={{ fontSize: 60, mb: 2, color: "#e8eaed" }} />
+//                 <Typography variant="h5" fontWeight={500}>
+//                   Comment puis-je vous aider ?
+//                 </Typography>
+//                 <Typography variant="body2">
+//                   Posez une question sur vos {currentChat.sources.length}{" "}
+//                   sources.
+//                 </Typography>
+//               </Box>
+//             )}
+
+//             {currentChat.history.map((chat) => (
+//               <Box key={chat.id} sx={{ display: "flex", gap: 2 }}>
+//                 <Avatar
+//                   sx={{
+//                     width: 30,
+//                     height: 30,
+//                     bgcolor: chat.isUser ? "#1a73e8" : "#f1f3f4",
+//                     color: chat.isUser ? "#fff" : "#5f6368",
+//                   }}
+//                 >
+//                   {chat.isUser ? (
+//                     <UserIcon fontSize="small" />
+//                   ) : (
+//                     <RobotIcon fontSize="small" />
+//                   )}
+//                 </Avatar>
+//                 <Box sx={{ flex: 1 }}>
+//                   <Typography
+//                     variant="body1"
+//                     sx={{ color: "#202124", lineHeight: 1.6 }}
+//                   >
+//                     {chat.text || chat.answer}
+//                   </Typography>
+//                 </Box>
+//               </Box>
+//             ))}
+//             {loading && <CircularProgress size={20} sx={{ ml: 6 }} />}
+//           </Box>
+
+//           <Box sx={{ p: 3 }}>
+//             <Paper
+//               elevation={0}
+//               sx={{
+//                 p: "10px 20px",
+//                 display: "flex",
+//                 borderRadius: "30px",
+//                 border: "1px solid #dadce0",
+//                 bgcolor: "#f8f9fa",
+//               }}
+//             >
+//               <InputBase
+//                 fullWidth
+//                 placeholder="Posez une question..."
+//                 value={message}
+//                 onChange={(e) => setMessage(e.target.value)}
+//                 onKeyPress={(e) => e.key === "Enter" && handleSend()}
+//               />
+//               <IconButton
+//                 onClick={handleSend}
+//                 disabled={loading || !message.trim()}
+//                 sx={{ color: "#1a73e8" }}
+//               >
+//                 <SendIcon />
+//               </IconButton>
+//             </Paper>
+//           </Box>
+//         </ColumnPaper>
+//       </Box>
+
+//       {/* --- COLONNE DROITE : STUDIO --- */}
+//       <Box sx={{ width: "320px", display: "flex", flexDirection: "column" }}>
+//         <ColumnPaper sx={{ p: 2.5 }}>
+//           <Typography
+//             variant="subtitle2"
+//             sx={{ fontWeight: 800, color: "#5f6368", mb: 3 }}
+//           >
+//             STUDIO AI
+//           </Typography>
+//           <Grid container spacing={2}>
+//             <Grid item xs={12}>
+//               <StudioCard bgcolor="#e8f0fe">
+//                 <MindMapIcon color="primary" />
+//                 <Typography variant="body2" fontWeight={600}>
+//                   Résumé de la discussion
+//                 </Typography>
+//               </StudioCard>
+//             </Grid>
+//             <Grid item xs={12}>
+//               <StudioCard bgcolor="#e6f4ea">
+//                 <QuizIcon sx={{ color: "#1e8e3e" }} />
+//                 <Typography variant="body2" fontWeight={600}>
+//                   Générer un Quiz
+//                 </Typography>
+//               </StudioCard>
+//             </Grid>
+//             <Grid item xs={12}>
+//               <StudioCard bgcolor="#fef7e0">
+//                 <FlashcardIcon sx={{ color: "#f9ab00" }} />
+//                 <Typography variant="body2" fontWeight={600}>
+//                   Flashcards
+//                 </Typography>
+//               </StudioCard>
+//             </Grid>
+//           </Grid>
+
+//           <Box
+//             sx={{
+//               mt: "auto",
+//               p: 3,
+//               textAlign: "center",
+//               border: "1px dashed #dadce0",
+//               borderRadius: "16px",
+//               bgcolor: "#fafafa",
+//             }}
+//           >
+//             <Typography variant="caption" color="text.secondary">
+//               Le résultat des outils Studio apparaîtra ici après génération.
+//             </Typography>
+//           </Box>
+//         </ColumnPaper>
+//       </Box>
+
+//       <Snackbar
+//         open={openSnackbar}
+//         autoHideDuration={3000}
+//         onClose={() => setOpenSnackbar(false)}
+//         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+//       >
+//         <Alert
+//           onClose={() => setOpenSnackbar(false)}
+//           severity="success"
+//           sx={{ width: "100%", borderRadius: "12px" }}
+//         >
+//           Lien copié !
+//         </Alert>
+//       </Snackbar>
+//     </MainContainer>
+//   );
+// }
+
+// export default PdfManager;
+
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // Import pour la redirection
-import { jwtDecode } from "jwt-decode";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   IconButton,
@@ -598,9 +1186,12 @@ import {
   Grid,
   InputBase,
   Tooltip,
-  Fade,
   Snackbar,
   Alert,
+  Tabs,
+  Tab,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -618,19 +1209,26 @@ import {
   DeleteOutline as DeleteIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
-  Logout as LogoutIcon, // Import de l'icône de déconnexion
+  Logout as LogoutIcon,
+  Settings as SettingsIcon,
+  Apps as AppsIcon,
 } from "@mui/icons-material";
 
 // --- STYLED COMPONENTS ---
-const MainContainer = styled(Box)({
+const MainContainer = styled(Box)(({ theme }) => ({
   display: "flex",
   height: "100vh",
   backgroundColor: "#f0f2f9",
   padding: "12px",
   gap: "12px",
-});
+  [theme.breakpoints.down("md")]: {
+    padding: "0",
+    gap: "0",
+    flexDirection: "column",
+  },
+}));
 
-const ColumnPaper = styled(Paper)({
+const ColumnPaper = styled(Paper)(({ theme }) => ({
   height: "100%",
   borderRadius: "24px",
   display: "flex",
@@ -639,7 +1237,11 @@ const ColumnPaper = styled(Paper)({
   border: "1px solid #e0e4f0",
   boxShadow: "none",
   overflow: "hidden",
-});
+  [theme.breakpoints.down("md")]: {
+    borderRadius: "0",
+    border: "none",
+  },
+}));
 
 const HistoryItem = styled(Button)(({ active }) => ({
   justifyContent: "flex-start",
@@ -669,21 +1271,33 @@ const StudioCard = styled(Button)(({ bgcolor }) => ({
   display: "flex",
   flexDirection: "row",
   justifyContent: "flex-start",
-  padding: "14px",
+  alignItems: "left",
+  padding: "0 24px",
   borderRadius: "14px",
   textTransform: "none",
-  width: "100%",
+
+  // --- FORCE LA TAILLE IDENTIQUE ---
+  width: "180%", // Largeur totale
+  //minWidth: "100%",        // Sécurité pour la largeur
+  height: "64px", // Hauteur fixe
+  // ---------------------------------
+
   backgroundColor: bgcolor || "#f8f9fa",
   border: "1px solid #f0f0f0",
   color: "#3c4043",
-  gap: "12px",
-  "&:hover": { opacity: 0.9, backgroundColor: bgcolor },
+  gap: "16px",
+  "&:hover": {
+    backgroundColor: bgcolor,
+    opacity: 0.9,
+  },
 }));
 
 function PdfManager() {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-  // --- ÉTATS PERSISTANTS ---
+  // --- ÉTATS ---
   const [conversations, setConversations] = useState(() => {
     const saved = localStorage.getItem("notebook_history");
     return saved
@@ -691,14 +1305,16 @@ function PdfManager() {
       : [{ id: "1", title: "Ma première note", history: [], sources: [] }];
   });
   const [activeChatId, setActiveChatId] = useState(conversations[0]?.id || "1");
-
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(true);
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [activeTab, setActiveTab] = useState(1);
   const scrollRef = useRef(null);
 
+  const [currentFiles, setCurrentFiles] = useState({});
   const userName = localStorage.getItem("userName") || "User";
+  const userId = localStorage.getItem("userId") || "6959abb4042129d51bfe8707";
 
   useEffect(() => {
     localStorage.setItem("notebook_history", JSON.stringify(conversations));
@@ -709,20 +1325,11 @@ function PdfManager() {
   const currentChat =
     conversations.find((c) => c.id === activeChatId) || conversations[0];
 
-  // --- LOGIQUE ACTIONS ---
-
+  // --- LOGIQUE ACTIONS (Inchangée) ---
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userName");
-    // Optionnel : localStorage.removeItem("notebook_history"); si vous voulez vider l'historique au logout
-    navigate("/"); // Redirige vers la page d'accueil
+    localStorage.clear();
+    navigate("/");
   };
-
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setOpenSnackbar(true);
-  };
-
   const createNewChat = () => {
     const newId = Date.now().toString();
     const newChat = {
@@ -734,7 +1341,6 @@ function PdfManager() {
     setConversations([newChat, ...conversations]);
     setActiveChatId(newId);
   };
-
   const deleteChat = (e, id) => {
     e.stopPropagation();
     const filtered = conversations.filter((c) => c.id !== id);
@@ -753,66 +1359,78 @@ function PdfManager() {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
-    const newSources = files.map((f) => ({
-      name: f.name,
-      id: Date.now() + Math.random(),
-    }));
-
-    setConversations((prev) =>
-      prev.map((chat) =>
-        chat.id === activeChatId
-          ? { ...chat, sources: [...chat.sources, ...newSources] }
-          : chat
-      )
-    );
+    const formData = new FormData();
+    formData.append("user_id", userId);
+    files.forEach((file) => formData.append("file", file));
+    try {
+      setLoading(true);
+      await axios.post(
+        "https://substanceai-back-end.onrender.com/api/auth/upload-pdf/",
+        formData
+      );
+      setCurrentFiles((prev) => ({ ...prev, [activeChatId]: files[0] }));
+      const newSources = files.map((f) => ({
+        name: f.name,
+        id: Date.now() + Math.random(),
+      }));
+      setConversations((prev) =>
+        prev.map((chat) =>
+          chat.id === activeChatId
+            ? { ...chat, sources: [...chat.sources, ...newSources] }
+            : chat
+        )
+      );
+    } catch (err) {
+      alert("Erreur lors de l'upload");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSend = async () => {
     if (!message.trim()) return;
-
+    const fileToProcess = currentFiles[activeChatId];
     const userMsg = {
       id: Date.now(),
       text: message,
       isUser: true,
       timestamp: new Date().toLocaleTimeString(),
     };
-
     setConversations((prev) =>
       prev.map((chat) => {
         if (chat.id === activeChatId) {
-          const isFirst = chat.history.length === 0;
           return {
             ...chat,
             history: [...chat.history, userMsg],
-            title: isFirst
-              ? message.length > 20
+            title:
+              chat.history.length === 0
                 ? message.substring(0, 20) + "..."
-                : message
-              : chat.title,
+                : chat.title,
           };
         }
         return chat;
       })
     );
-
     setLoading(true);
-    const textToSend = message;
+    const textQuestion = message;
     setMessage("");
-
     try {
-      const res = await axios.post("http://localhost:8000/api/ask/", {
-        message: textToSend,
-      });
+      const formData = new FormData();
+      formData.append("question", textQuestion);
+      if (fileToProcess) formData.append("file", fileToProcess);
+      const res = await axios.post(
+        "http://localhost:8000/api/auth/send-to-rag/",
+        formData
+      );
       const botMsg = {
         id: Date.now() + 1,
-        answer: res.data.answer,
+        text: res.data.answer,
         isUser: false,
         timestamp: new Date().toLocaleTimeString(),
       };
-
       setConversations((prev) =>
         prev.map((chat) =>
           chat.id === activeChatId
@@ -831,139 +1449,199 @@ function PdfManager() {
     <MainContainer>
       <CssBaseline />
 
-      {/* --- COLONNE GAUCHE : HISTORIQUE, SOURCES ET LOGOUT --- */}
-      <Box
-        sx={{
-          width: showHistory ? "300px" : "80px",
-          transition: "width 0.3s ease",
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-        }}
-      >
-        <ColumnPaper sx={{ flex: 1, p: 2 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 2,
-            }}
-          >
-            {showHistory && (
-              <Typography
-                variant="subtitle2"
-                sx={{ fontWeight: 800, color: "#5f6368" }}
-              >
-                NOTEBOOKS
-              </Typography>
-            )}
-            <IconButton onClick={() => setShowHistory(!showHistory)}>
-              {showHistory ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-            </IconButton>
+      {/* --- HEADER MOBILE --- */}
+      {isMobile && (
+        <Box
+          sx={{
+            p: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            bgcolor: "white",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                bgcolor: "black",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <MagicIcon sx={{ color: "white", fontSize: 18 }} />
+            </Box>
+            <Typography variant="h6" fontWeight={600}>
+              {currentChat.title}
+            </Typography>
+            <SettingsIcon sx={{ color: "#5f6368", fontSize: 20 }} />
           </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <AppsIcon sx={{ color: "#5f6368" }} />
+            <Avatar sx={{ width: 34, height: 34, bgcolor: "#00796b" }}>
+              {userName[0]}
+            </Avatar>
+          </Box>
+        </Box>
+      )}
 
-          {showHistory && (
-            <>
-              <Button
-                fullWidth
-                startIcon={<NewChatIcon />}
-                onClick={createNewChat}
-                sx={{
-                  mb: 3,
-                  borderRadius: "12px",
-                  py: 1.2,
-                  textTransform: "none",
-                  bgcolor: "#1a73e8",
-                  color: "white",
-                  "&:hover": { bgcolor: "#1765cc" },
-                }}
-              >
-                Nouveau Chat
-              </Button>
+      {/* --- TABS MOBILE --- */}
+      {isMobile && (
+        <Tabs
+          value={activeTab}
+          onChange={(e, v) => setActiveTab(v)}
+          variant="fullWidth"
+          sx={{ bgcolor: "white", borderBottom: "1px solid #e0e4f0" }}
+        >
+          <Tab
+            label="Sources"
+            sx={{ textTransform: "none", fontWeight: 600 }}
+          />
+          <Tab
+            label="Discussion"
+            sx={{ textTransform: "none", fontWeight: 600 }}
+          />
+          <Tab label="Studio" sx={{ textTransform: "none", fontWeight: 600 }} />
+        </Tabs>
+      )}
 
-              <Box sx={{ flex: 1, overflowY: "auto", mb: 2 }}>
-                {conversations.map((chat) => (
-                  <HistoryItem
-                    key={chat.id}
-                    active={chat.id === activeChatId}
-                    onClick={() => setActiveChatId(chat.id)}
-                    startIcon={<ChatIcon fontSize="small" />}
-                  >
-                    <Typography variant="body2" sx={{ flex: 1 }}>
-                      {chat.title}
-                    </Typography>
-                    <IconButton
-                      className="delete-icon"
-                      size="small"
-                      sx={{ opacity: 0, p: 0 }}
-                      onClick={(e) => deleteChat(e, chat.id)}
-                    >
-                      <DeleteIcon sx={{ fontSize: 16 }} />
-                    </IconButton>
-                  </HistoryItem>
-                ))}
-              </Box>
-
-              <Box sx={{ borderTop: "1px solid #eee", pt: 2, mb: 2 }}>
+      {/* --- COLONNE GAUCHE --- */}
+      {(activeTab === 0 || !isMobile) && (
+        <Box
+          sx={{
+            width: isMobile ? "100%" : showHistory ? "300px" : "80px",
+            display: isMobile && activeTab !== 0 ? "none" : "flex",
+            flexDirection: "column",
+            gap: 2,
+            transition: "width 0.3s ease",
+          }}
+        >
+          <ColumnPaper sx={{ flex: 1, p: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+              }}
+            >
+              {(showHistory || isMobile) && (
                 <Typography
-                  variant="caption"
-                  sx={{
-                    fontWeight: 700,
-                    color: "#5f6368",
-                    mb: 1,
-                    display: "block",
-                  }}
+                  variant="subtitle2"
+                  sx={{ fontWeight: 800, color: "#5f6368" }}
                 >
-                  SOURCES
+                  NOTEBOOKS
                 </Typography>
+              )}
+              {!isMobile && (
+                <IconButton onClick={() => setShowHistory(!showHistory)}>
+                  {showHistory ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+                </IconButton>
+              )}
+            </Box>
+            {(showHistory || isMobile) && (
+              <>
                 <Button
                   fullWidth
-                  variant="outlined"
-                  size="small"
-                  startIcon={<AddIcon />}
-                  onClick={() => document.getElementById("file-input").click()}
-                  sx={{ borderRadius: "10px", textTransform: "none", mb: 2 }}
+                  startIcon={<NewChatIcon />}
+                  onClick={createNewChat}
+                  sx={{
+                    mb: 3,
+                    borderRadius: "12px",
+                    py: 1.2,
+                    textTransform: "none",
+                    bgcolor: "#1a73e8",
+                    color: "white",
+                    "&:hover": { bgcolor: "#1765cc" },
+                  }}
                 >
-                  Ajouter PDF
+                  Nouveau Chat
                 </Button>
-                <input
-                  id="file-input"
-                  type="file"
-                  hidden
-                  multiple
-                  onChange={handleFileChange}
-                />
-
-                <Box sx={{ maxHeight: "150px", overflowY: "auto" }}>
-                  {currentChat.sources.map((s) => (
-                    <Box
-                      key={s.id}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        p: 1,
-                        bgcolor: "#f8f9fa",
-                        borderRadius: "8px",
-                        mb: 0.5,
+                <Box sx={{ flex: 1, overflowY: "auto", mb: 2 }}>
+                  {conversations.map((chat) => (
+                    <HistoryItem
+                      key={chat.id}
+                      active={chat.id === activeChatId}
+                      onClick={() => {
+                        setActiveChatId(chat.id);
+                        if (isMobile) setActiveTab(1);
                       }}
+                      startIcon={<ChatIcon fontSize="small" />}
                     >
-                      <PdfIcon sx={{ fontSize: 16, color: "#ea4335" }} />
-                      <Typography
-                        variant="caption"
-                        noWrap
-                        sx={{ fontWeight: 500 }}
-                      >
-                        {s.name}
+                      <Typography variant="body2" sx={{ flex: 1 }}>
+                        {chat.title}
                       </Typography>
-                    </Box>
+                      <IconButton
+                        className="delete-icon"
+                        size="small"
+                        sx={{ opacity: 0, p: 0 }}
+                        onClick={(e) => deleteChat(e, chat.id)}
+                      >
+                        <DeleteIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </HistoryItem>
                   ))}
                 </Box>
-              </Box>
-
-              {/* BOUTON DÉCONNEXION (Positionné en bas du menu) */}
-              <Box sx={{ borderTop: "1px solid #eee", pt: 2 }}>
+                <Box sx={{ borderTop: "1px solid #eee", pt: 2, mb: 2 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: 700,
+                      color: "#5f6368",
+                      mb: 1,
+                      display: "block",
+                    }}
+                  >
+                    SOURCES
+                  </Typography>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                    startIcon={<AddIcon />}
+                    onClick={() =>
+                      document.getElementById("file-input").click()
+                    }
+                    sx={{ borderRadius: "10px", textTransform: "none", mb: 2 }}
+                  >
+                    Ajouter PDF
+                  </Button>
+                  <input
+                    id="file-input"
+                    type="file"
+                    hidden
+                    accept=".pdf"
+                    onChange={handleFileChange}
+                  />
+                  <Box sx={{ maxHeight: "150px", overflowY: "auto" }}>
+                    {currentChat.sources.map((s) => (
+                      <Box
+                        key={s.id}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          p: 1,
+                          bgcolor: "#f8f9fa",
+                          borderRadius: "8px",
+                          mb: 0.5,
+                        }}
+                      >
+                        <PdfIcon sx={{ fontSize: 16, color: "#ea4335" }} />
+                        <Typography
+                          variant="caption"
+                          noWrap
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {s.name}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
                 <Button
                   fullWidth
                   startIcon={<LogoutIcon />}
@@ -971,196 +1649,209 @@ function PdfManager() {
                   sx={{
                     justifyContent: "flex-start",
                     borderRadius: "12px",
-                    color: "#d32f2f", // Rouge pour l'alerte
+                    color: "#d32f2f",
                     textTransform: "none",
                     fontWeight: 600,
-                    "&:hover": { bgcolor: "#fdecea" },
                   }}
                 >
                   Déconnexion
                 </Button>
-              </Box>
-            </>
-          )}
-        </ColumnPaper>
-      </Box>
-
-      {/* --- COLONNE CENTRALE : CHAT --- */}
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        <ColumnPaper>
-          <Box
-            sx={{
-              p: 2,
-              display: "flex",
-              alignItems: "center",
-              borderBottom: "1px solid #f1f3f4",
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ flexGrow: 1, fontWeight: 600, color: "#202124" }}
-            >
-              {currentChat.title}
-            </Typography>
-
-            <Tooltip title="Partager le lien">
-              <IconButton onClick={handleShare} sx={{ mr: 1 }}>
-                <ShareIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-
-            <Avatar sx={{ width: 34, height: 34, bgcolor: "#00796b" }}>
-              {userName[0]}
-            </Avatar>
-          </Box>
-
-          <Box
-            ref={scrollRef}
-            sx={{
-              flex: 1,
-              p: 3,
-              overflowY: "auto",
-              display: "flex",
-              flexDirection: "column",
-              gap: 3,
-            }}
-          >
-            {currentChat.history.length === 0 && (
-              <Box sx={{ textAlign: "center", mt: 10, opacity: 0.5 }}>
-                <MagicIcon sx={{ fontSize: 60, mb: 2, color: "#e8eaed" }} />
-                <Typography variant="h5" fontWeight={500}>
-                  Comment puis-je vous aider ?
-                </Typography>
-                <Typography variant="body2">
-                  Posez une question sur vos {currentChat.sources.length}{" "}
-                  sources.
-                </Typography>
-              </Box>
+              </>
             )}
+          </ColumnPaper>
+        </Box>
+      )}
 
-            {currentChat.history.map((chat) => (
-              <Box key={chat.id} sx={{ display: "flex", gap: 2 }}>
-                <Avatar
-                  sx={{
-                    width: 30,
-                    height: 30,
-                    bgcolor: chat.isUser ? "#1a73e8" : "#f1f3f4",
-                    color: chat.isUser ? "#fff" : "#5f6368",
+      {/* --- COLONNE CENTRALE --- */}
+      {(activeTab === 1 || !isMobile) && (
+        <Box
+          sx={{
+            flex: 1,
+            display: isMobile && activeTab !== 1 ? "none" : "flex",
+            flexDirection: "column",
+            height: isMobile ? "calc(100vh - 110px)" : "100%",
+          }}
+        >
+          <ColumnPaper>
+            {!isMobile && (
+              <Box
+                sx={{
+                  p: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  borderBottom: "1px solid #f1f3f4",
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{ flexGrow: 1, fontWeight: 600, color: "#202124" }}
+                >
+                  {currentChat.title}
+                </Typography>
+                <IconButton
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    setOpenSnackbar(true);
                   }}
                 >
-                  {chat.isUser ? (
-                    <UserIcon fontSize="small" />
-                  ) : (
-                    <RobotIcon fontSize="small" />
-                  )}
+                  <ShareIcon fontSize="small" />
+                </IconButton>
+                <Avatar
+                  sx={{ width: 34, height: 34, bgcolor: "#00796b", ml: 1 }}
+                >
+                  {userName[0]}
                 </Avatar>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="body1"
-                    sx={{ color: "#202124", lineHeight: 1.6 }}
-                  >
-                    {chat.text || chat.answer}
-                  </Typography>
-                </Box>
               </Box>
-            ))}
-            {loading && <CircularProgress size={20} sx={{ ml: 6 }} />}
-          </Box>
-
-          <Box sx={{ p: 3 }}>
-            <Paper
-              elevation={0}
+            )}
+            <Box
+              ref={scrollRef}
               sx={{
-                p: "10px 20px",
+                flex: 1,
+                p: 3,
+                overflowY: "auto",
                 display: "flex",
-                borderRadius: "30px",
-                border: "1px solid #dadce0",
-                bgcolor: "#f8f9fa",
+                flexDirection: "column",
+                gap: 3,
               }}
             >
-              <InputBase
-                fullWidth
-                placeholder="Posez une question..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleSend()}
-              />
-              <IconButton
-                onClick={handleSend}
-                disabled={loading || !message.trim()}
-                sx={{ color: "#1a73e8" }}
+              {currentChat.history.length === 0 && (
+                <Box sx={{ textAlign: "center", mt: 10, opacity: 0.5 }}>
+                  <MagicIcon sx={{ fontSize: 60, mb: 2, color: "#e8eaed" }} />
+                  <Typography variant="h5" fontWeight={500}>
+                    Comment puis-je vous aider ?
+                  </Typography>
+                </Box>
+              )}
+              {currentChat.history.map((chat) => (
+                <Box
+                  key={chat.id}
+                  sx={{
+                    display: "flex",
+                    gap: 2,
+                    alignSelf: chat.isUser ? "flex-end" : "flex-start",
+                    maxWidth: "85%",
+                  }}
+                >
+                  {!chat.isUser && (
+                    <Avatar
+                      sx={{
+                        width: 30,
+                        height: 30,
+                        bgcolor: "#f1f3f4",
+                        color: "#5f6368",
+                      }}
+                    >
+                      <RobotIcon fontSize="small" />
+                    </Avatar>
+                  )}
+                  <Paper
+                    sx={{
+                      p: 2,
+                      bgcolor: chat.isUser ? "#1a73e8" : "#f8f9fa",
+                      color: chat.isUser ? "white" : "black",
+                      borderRadius: "18px",
+                    }}
+                  >
+                    <Typography variant="body1">{chat.text}</Typography>
+                  </Paper>
+                  {chat.isUser && (
+                    <Avatar sx={{ width: 30, height: 30, bgcolor: "#1a73e8" }}>
+                      <UserIcon fontSize="small" />
+                    </Avatar>
+                  )}
+                </Box>
+              ))}
+              {loading && (
+                <CircularProgress size={24} sx={{ alignSelf: "center" }} />
+              )}
+            </Box>
+            <Box sx={{ p: 3 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: "10px 20px",
+                  display: "flex",
+                  borderRadius: "30px",
+                  border: "1px solid #dadce0",
+                  bgcolor: "#f8f9fa",
+                }}
               >
-                <SendIcon />
-              </IconButton>
-            </Paper>
-          </Box>
-        </ColumnPaper>
-      </Box>
+                <InputBase
+                  fullWidth
+                  placeholder="Posez une question..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && handleSend()}
+                />
+                <IconButton
+                  onClick={handleSend}
+                  disabled={loading || !message.trim()}
+                  sx={{ color: "#1a73e8" }}
+                >
+                  <SendIcon />
+                </IconButton>
+              </Paper>
+            </Box>
+          </ColumnPaper>
+        </Box>
+      )}
 
-      {/* --- COLONNE DROITE : STUDIO --- */}
-      <Box sx={{ width: "320px", display: "flex", flexDirection: "column" }}>
-        <ColumnPaper sx={{ p: 2.5 }}>
-          <Typography
-            variant="subtitle2"
-            sx={{ fontWeight: 800, color: "#5f6368", mb: 3 }}
-          >
-            STUDIO AI
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <StudioCard bgcolor="#e8f0fe">
-                <MindMapIcon color="primary" />
-                <Typography variant="body2" fontWeight={600}>
-                  Résumé de la discussion
-                </Typography>
-              </StudioCard>
-            </Grid>
-            <Grid item xs={12}>
-              <StudioCard bgcolor="#e6f4ea">
-                <QuizIcon sx={{ color: "#1e8e3e" }} />
-                <Typography variant="body2" fontWeight={600}>
-                  Générer un Quiz
-                </Typography>
-              </StudioCard>
-            </Grid>
-            <Grid item xs={12}>
-              <StudioCard bgcolor="#fef7e0">
-                <FlashcardIcon sx={{ color: "#f9ab00" }} />
-                <Typography variant="body2" fontWeight={600}>
-                  Flashcards
-                </Typography>
-              </StudioCard>
-            </Grid>
-          </Grid>
-
-          <Box
-            sx={{
-              mt: "auto",
-              p: 3,
-              textAlign: "center",
-              border: "1px dashed #dadce0",
-              borderRadius: "16px",
-              bgcolor: "#fafafa",
-            }}
-          >
-            <Typography variant="caption" color="text.secondary">
-              Le résultat des outils Studio apparaîtra ici après génération.
+      {/* --- COLONNE DROITE (STUDIO AI) --- */}
+      {(activeTab === 2 || !isMobile) && (
+        <Box
+          sx={{
+            width: isMobile ? "100%" : "320px",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <ColumnPaper sx={{ p: 2.5 }}>
+            <Typography
+              variant="subtitle2"
+              sx={{ fontWeight: 800, color: "#5f6368", mb: 3 }}
+            >
+              STUDIO AI
             </Typography>
-          </Box>
-        </ColumnPaper>
-      </Box>
+
+            <Grid container spacing={2}>
+              {/* CHAQUE BOUTON EST DANS UN xs={12} POUR AVOIR LA MÊME LONGUEUR */}
+              <Grid item xs={12}>
+                <StudioCard bgcolor="#e6f4ea">
+                  <QuizIcon sx={{ color: "#1e8e3e" }} />
+                  <Typography variant="body2" fontWeight={600}>
+                    Quiz
+                  </Typography>
+                </StudioCard>
+              </Grid>
+
+              <Grid item xs={12}>
+                <StudioCard bgcolor="#e8f0fe">
+                  <MindMapIcon color="primary" />
+                  <Typography variant="body2" fontWeight={600}>
+                    Résumé
+                  </Typography>
+                </StudioCard>
+              </Grid>
+
+              <Grid item xs={12}>
+                <StudioCard bgcolor="#fef7e0">
+                  <FlashcardIcon sx={{ color: "#f9ab00" }} />
+                  <Typography variant="body2" fontWeight={600}>
+                    Flashcards
+                  </Typography>
+                </StudioCard>
+              </Grid>
+            </Grid>
+          </ColumnPaper>
+        </Box>
+      )}
 
       <Snackbar
         open={openSnackbar}
         autoHideDuration={3000}
         onClose={() => setOpenSnackbar(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert
-          onClose={() => setOpenSnackbar(false)}
-          severity="success"
-          sx={{ width: "100%", borderRadius: "12px" }}
-        >
+        <Alert severity="success" sx={{ width: "100%" }}>
           Lien copié !
         </Alert>
       </Snackbar>
