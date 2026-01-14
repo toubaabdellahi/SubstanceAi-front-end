@@ -1369,7 +1369,7 @@ function PdfManager() {
     try {
       setLoading(true);
       const res = await axios.post(
-        "http://localhost:8000/api/auth/upload-pdf/", // Cette URL existe déjà dans Django
+        "https://substanceai-back-end.onrender.com/api/auth/upload-pdf/", // Cette URL existe déjà dans Django
         formData,
         {
           headers: {
@@ -1437,7 +1437,7 @@ function PdfManager() {
 
       // ENVOI COMPLET VERS DJANGO
       const res = await axios.post(
-        "http://localhost:8000/chat_model/",
+        "https://substanceai-back-end.onrender.com/chat_model/",
         {
           question: textQuestion,
           chat_history: chatHistory,
