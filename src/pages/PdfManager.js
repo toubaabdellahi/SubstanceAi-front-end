@@ -1169,7 +1169,6 @@
 // }
 
 // export default PdfManager;
-
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -1185,7 +1184,6 @@ import {
   Button,
   Grid,
   InputBase,
-  Tooltip,
   Snackbar,
   Alert,
   Tabs,
@@ -1213,6 +1211,11 @@ import {
   Settings as SettingsIcon,
   Apps as AppsIcon,
 } from "@mui/icons-material";
+
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 
 // --- STYLED COMPONENTS ---
 const MainContainer = styled(Box)(({ theme }) => ({
@@ -1271,17 +1274,12 @@ const StudioCard = styled(Button)(({ bgcolor }) => ({
   display: "flex",
   flexDirection: "row",
   justifyContent: "flex-start",
-  alignItems: "left",
+  alignItems: "center",
   padding: "0 24px",
   borderRadius: "14px",
   textTransform: "none",
-
-  // --- FORCE LA TAILLE IDENTIQUE ---
-  width: "180%", // Largeur totale
-  //minWidth: "100%",        // Sécurité pour la largeur
-  height: "64px", // Hauteur fixe
-  // ---------------------------------
-
+  width: "100%",
+  height: "64px",
   backgroundColor: bgcolor || "#f8f9fa",
   border: "1px solid #f0f0f0",
   color: "#3c4043",
@@ -1312,7 +1310,6 @@ function PdfManager() {
   const [activeTab, setActiveTab] = useState(1);
   const scrollRef = useRef(null);
 
-  const [currentFiles, setCurrentFiles] = useState({});
   const userName = localStorage.getItem("userName") || "User";
   const userId = localStorage.getItem("userId") || "6959abb4042129d51bfe8707";
 
@@ -1325,11 +1322,12 @@ function PdfManager() {
   const currentChat =
     conversations.find((c) => c.id === activeChatId) || conversations[0];
 
-  // --- LOGIQUE ACTIONS (Inchangée) ---
+  // --- LOGIQUE ACTIONS ---
   const handleLogout = () => {
     localStorage.clear();
     navigate("/");
   };
+
   const createNewChat = () => {
     const newId = Date.now().toString();
     const newChat = {
@@ -1341,6 +1339,7 @@ function PdfManager() {
     setConversations([newChat, ...conversations]);
     setActiveChatId(newId);
   };
+
   const deleteChat = (e, id) => {
     e.stopPropagation();
     const filtered = conversations.filter((c) => c.id !== id);
@@ -1362,20 +1361,29 @@ function PdfManager() {
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
+
     const formData = new FormData();
     formData.append("user_id", userId);
     files.forEach((file) => formData.append("file", file));
+
     try {
       setLoading(true);
-      await axios.post(
-        "https://substanceai-back-end.onrender.com/api/auth/upload-pdf/",
-        formData
+      const res = await axios.post(
+        "http://localhost:8000/api/auth/upload-pdf/", // Cette URL existe déjà dans Django
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
-      setCurrentFiles((prev) => ({ ...prev, [activeChatId]: files[0] }));
+
+      console.log("Upload réussi:", res.data);
       const newSources = files.map((f) => ({
         name: f.name,
         id: Date.now() + Math.random(),
       }));
+
       setConversations((prev) =>
         prev.map((chat) =>
           chat.id === activeChatId
@@ -1383,8 +1391,13 @@ function PdfManager() {
             : chat
         )
       );
+
+      alert("PDF uploadé avec succès !");
     } catch (err) {
-      alert("Erreur lors de l'upload");
+      console.error("Erreur upload:", err);
+      alert(
+        `Erreur lors de l'upload: ${err.response?.data?.detail || err.message}`
+      );
     } finally {
       setLoading(false);
     }
@@ -1392,45 +1405,72 @@ function PdfManager() {
 
   const handleSend = async () => {
     if (!message.trim()) return;
-    const fileToProcess = currentFiles[activeChatId];
+
     const userMsg = {
       id: Date.now(),
       text: message,
       isUser: true,
       timestamp: new Date().toLocaleTimeString(),
     };
+
+    // Ajout immédiat à l'interface
     setConversations((prev) =>
-      prev.map((chat) => {
-        if (chat.id === activeChatId) {
-          return {
-            ...chat,
-            history: [...chat.history, userMsg],
-            title:
-              chat.history.length === 0
-                ? message.substring(0, 20) + "..."
-                : chat.title,
-          };
-        }
-        return chat;
-      })
+      prev.map((chat) =>
+        chat.id === activeChatId
+          ? { ...chat, history: [...chat.history, userMsg] }
+          : chat
+      )
     );
+
     setLoading(true);
     const textQuestion = message;
     setMessage("");
+
     try {
-      const formData = new FormData();
-      formData.append("question", textQuestion);
-      if (fileToProcess) formData.append("file", fileToProcess);
+      // Construction de l'historique
+      const chatHistory = currentChat.history.reduce((acc, msg, idx, arr) => {
+        if (msg.isUser && arr[idx + 1] && !arr[idx + 1].isUser) {
+          acc.push([msg.text, arr[idx + 1].text]);
+        }
+        return acc;
+      }, []);
+
+      // ENVOI COMPLET VERS DJANGO
       const res = await axios.post(
-        "http://localhost:8000/api/auth/send-to-rag/",
-        formData
+        "http://localhost:8000/chat_model/",
+        {
+          question: textQuestion,
+          chat_history: chatHistory,
+          user_id: userId,
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+        }
       );
+
+      // --- CORRECTION DU PROBLÈME D'AFFICHAGE VIDE ---
+      // On vérifie d'abord 'answer', sinon on prend le dernier message dans 'chat_history'
+      let aiText = res.data.answer;
+
+      if (
+        !aiText &&
+        res.data.chat_history &&
+        res.data.chat_history.length > 0
+      ) {
+        const lastPair =
+          res.data.chat_history[res.data.chat_history.length - 1];
+        aiText = lastPair[1]; // Récupère la réponse de l'IA (index 1)
+      }
+
       const botMsg = {
         id: Date.now() + 1,
-        text: res.data.answer,
+        text:
+          aiText || res.data.detail || "Réponse reçue, mais le texte est vide.",
         isUser: false,
         timestamp: new Date().toLocaleTimeString(),
       };
+      // ----------------------------------------------
+
       setConversations((prev) =>
         prev.map((chat) =>
           chat.id === activeChatId
@@ -1439,7 +1479,22 @@ function PdfManager() {
         )
       );
     } catch (err) {
-      console.error(err);
+      console.error("Erreur:", err);
+      const errorMsg = {
+        id: Date.now() + 1,
+        text: `❌ Erreur: ${
+          err.response?.data?.detail || "Le serveur IA est trop lent"
+        }`,
+        isUser: false,
+        timestamp: new Date().toLocaleTimeString(),
+      };
+      setConversations((prev) =>
+        prev.map((chat) =>
+          chat.id === activeChatId
+            ? { ...chat, history: [...chat.history, errorMsg] }
+            : chat
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -1661,7 +1716,6 @@ function PdfManager() {
           </ColumnPaper>
         </Box>
       )}
-
       {/* --- COLONNE CENTRALE --- */}
       {(activeTab === 1 || !isMobile) && (
         <Box
@@ -1752,7 +1806,25 @@ function PdfManager() {
                       borderRadius: "18px",
                     }}
                   >
-                    <Typography variant="body1">{chat.text}</Typography>
+                    {/* --- MODIFICATION ICI : RENDU MARKDOWN ET MATHS --- */}
+                    {chat.isUser ? (
+                      <Typography variant="body1">{chat.text}</Typography>
+                    ) : (
+                      <Box
+                        sx={{
+                          "& p": { m: 0 }, // Évite les marges inutiles dans les paragraphes Markdown
+                          "& table": { borderCollapse: "collapse", my: 1 },
+                          "& th, & td": { border: "1px solid #ddd", p: 1 },
+                        }}
+                      >
+                        <ReactMarkdown
+                          remarkPlugins={[remarkMath]}
+                          rehypePlugins={[rehypeKatex]}
+                        >
+                          {chat.text}
+                        </ReactMarkdown>
+                      </Box>
+                    )}
                   </Paper>
                   {chat.isUser && (
                     <Avatar sx={{ width: 30, height: 30, bgcolor: "#1a73e8" }}>
@@ -1814,7 +1886,6 @@ function PdfManager() {
             </Typography>
 
             <Grid container spacing={2}>
-              {/* CHAQUE BOUTON EST DANS UN xs={12} POUR AVOIR LA MÊME LONGUEUR */}
               <Grid item xs={12}>
                 <StudioCard bgcolor="#e6f4ea">
                   <QuizIcon sx={{ color: "#1e8e3e" }} />
