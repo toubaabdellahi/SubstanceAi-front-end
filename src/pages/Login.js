@@ -231,21 +231,27 @@ import React, { useState } from "react";
 import {
   Box,
   Button,
-  Card,
   CssBaseline,
   FormControl,
-  FormLabel,
   Link,
   Stack,
   TextField,
   Typography,
   Divider,
+  useTheme,
+  InputAdornment,
 } from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google";
+import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const primaryColor = theme.palette.primary.main;
+
   const [userError, setUserError] = useState(false);
   const [userErrorMessage, setUserErrorMessage] = useState("");
   const [passwordError, setPasswordError] = useState(false);
@@ -289,6 +295,7 @@ export default function Login() {
       setPasswordError(false);
       setPasswordErrorMessage("");
     }
+
     return isValid;
   };
 
@@ -322,10 +329,7 @@ export default function Login() {
       const result = await res.json();
 
       if (result.token) {
-        //  Stocker le token JWT dans localStorage
         localStorage.setItem("token", result.token);
-
-        //  Rediriger vers /pdf-manager
         navigate("/pdf-manager");
       } else {
         alert("Token non reçu depuis le serveur !");
@@ -339,51 +343,90 @@ export default function Login() {
     <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <CssBaseline />
 
-      {/* INJECTION DU STYLE GLOBAL */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        body {
-          background: radial-gradient(circle at top right, #eff6ff 0%, #ffffff 40%);
+
+        body{
           font-family: 'Plus Jakarta Sans', sans-serif !important;
+          background: #F9FDFC;
+        }
+
+        .login-panel{
+          width: 100%;
+          max-width: 420px;
+          padding: 22px;
+          border-radius: 22px;
+          background: transparent;
+        }
+
+        .field3d .MuiOutlinedInput-root{
+          border-radius: 14px !important;
+          background: rgba(255,255,255,0.78);
+          box-shadow:
+            0 10px 22px rgba(15,23,42,0.10),
+            inset 0 2px 0 rgba(255,255,255,0.95),
+            inset 0 -2px 6px rgba(15,23,42,0.06);
+          transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        }
+
+        .field3d .MuiOutlinedInput-notchedOutline{
+          border-color: rgba(26,115,232,0.20) !important;
+        }
+
+        .field3d .MuiOutlinedInput-root:hover{
+          transform: translateY(-1px);
+          box-shadow:
+            0 14px 28px rgba(15,23,42,0.14),
+            inset 0 2px 0 rgba(255,255,255,0.95),
+            inset 0 -2px 10px rgba(15,23,42,0.08);
+        }
+
+        .field3d .MuiOutlinedInput-root.Mui-focused{
+          transform: translateY(-1px);
+          box-shadow:
+            0 16px 34px rgba(26,115,232,0.18),
+            0 0 0 5px rgba(26,115,232,0.14),
+            inset 0 2px 0 rgba(255,255,255,0.95);
+        }
+
+        .field3d .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline{
+          border-color: rgba(26,115,232,0.55) !important;
+        }
+
+        .btn-main{
+          height: 52px;
+          border-radius: 14px !important;
+          font-weight: 900 !important;
+          text-transform: none !important;
+          box-shadow: 0 14px 30px rgba(26,115,232,0.22);
+        }
+
+        .btn-google{
+          border-radius: 14px !important;
+          text-transform: none !important;
+          font-weight: 800 !important;
+          background: rgba(255,255,255,0.45);
+          backdrop-filter: blur(10px);
+        }
+
+        @media (max-width: 420px){
+          .login-panel{ padding: 16px; }
         }
       `}</style>
 
-      {/* HEADER / LOGO */}
-      <Box sx={{ p: 4, display: "flex", justifyContent: "center" }}>
-        <Box
-          onClick={() => navigate("/")}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            cursor: "pointer",
-          }}
-        >
-          <Box
-            sx={{
-              bgcolor: "#1a73e8",
-              color: "white",
-              px: 1.5,
-              py: 0.5,
-              borderRadius: "8px",
-              fontWeight: 800,
-            }}
-          >
-            IA
-          </Box>
-          <Typography
-            sx={{
-              fontSize: "22px",
-              fontWeight: 800,
-              color: "#1a73e8",
-              letterSpacing: "-0.5px",
-            }}
-          >
-            SubstancIA
+      {/* HEADER */}
+      <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
+        <Box onClick={() => navigate("/")} sx={{ cursor: "pointer" }}>
+          <Typography variant="h6" fontWeight="bold">
+            Substanc
+            <Box component="span" sx={{ color: primaryColor }}>
+              IA
+            </Box>
           </Typography>
         </Box>
       </Box>
 
+      {/* CONTENU */}
       <Box
         sx={{
           flex: 1,
@@ -393,85 +436,69 @@ export default function Login() {
           p: 2,
         }}
       >
-        <Card
-          sx={{
-            width: "100%",
-            maxWidth: 420,
-            p: 4,
-            borderRadius: "28px",
-            border: "1px solid #f1f5f9",
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.08)",
-          }}
-        >
+        <div className="login-panel">
           <Stack spacing={3}>
-            <Box textAlign="center">
+            {/* ✅ Seul le texte monte (fusée reste à sa place) */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+              }}
+            >
               <Typography
-                sx={{ fontSize: "28px", fontWeight: 800, color: "#111827" }}
+                sx={{
+                  fontWeight: 900,
+                  fontSize: 26,
+                  mt: -12, // ✅ ICI : remonte seulement le texte (essaie -1, -2)
+                }}
               >
-                Bon retour ! 👋
+                Reste motivé
               </Typography>
-              <Typography sx={{ color: "#6b7280", fontSize: "15px", mt: 1 }}>
-                Accédez à votre parcours personnalisé.
-              </Typography>
+
+              <RocketLaunchIcon sx={{ fontSize: 26, mt: -12 }} />
             </Box>
 
             <Box component="form" onSubmit={handleSubmit} noValidate>
-              <Stack spacing={2.5}>
+              <Stack spacing={2}>
                 <FormControl>
-                  <FormLabel
-                    sx={{
-                      fontSize: "0.85rem",
-                      fontWeight: 700,
-                      mb: 1,
-                      color: "#374151",
-                    }}
-                  >
-                    Email ou nom d'utilisateur
-                  </FormLabel>
                   <TextField
+                    className="field3d"
                     name="usernameOrEmail"
                     id="usernameOrEmail"
-                    placeholder="votre@email.com"
+                    placeholder="Entrer votre email ou nom"
                     required
                     fullWidth
                     error={userError}
                     helperText={userErrorMessage}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "12px",
-                        bgcolor: "#f8fafc",
-                        "& fieldset": { borderColor: "#e2e8f0" },
-                      },
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PersonOutlineIcon sx={{ color: primaryColor }} />
+                        </InputAdornment>
+                      ),
                     }}
                   />
                 </FormControl>
 
                 <FormControl>
-                  <FormLabel
-                    sx={{
-                      fontSize: "0.85rem",
-                      fontWeight: 700,
-                      mb: 1,
-                      color: "#374151",
-                    }}
-                  >
-                    Mot de passe
-                  </FormLabel>
                   <TextField
+                    className="field3d"
                     required
                     fullWidth
                     name="password"
                     type="password"
                     id="password"
-                    placeholder="••••••••"
+                    placeholder="Entrer votre mot de passe"
                     error={passwordError}
                     helperText={passwordErrorMessage}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "12px",
-                        bgcolor: "#f8fafc",
-                        "& fieldset": { borderColor: "#e2e8f0" },
-                      },
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LockOutlinedIcon sx={{ color: primaryColor }} />
+                        </InputAdornment>
+                      ),
                     }}
                   />
                 </FormControl>
@@ -480,15 +507,7 @@ export default function Login() {
                   type="submit"
                   fullWidth
                   variant="contained"
-                  sx={{
-                    py: 1.8,
-                    borderRadius: "12px",
-                    bgcolor: "#1a73e8",
-                    fontWeight: 800,
-                    textTransform: "none",
-                    fontSize: "16px",
-                    "&:hover": { bgcolor: "#111827" },
-                  }}
+                  className="btn-main"
                 >
                   Se connecter
                 </Button>
@@ -496,56 +515,32 @@ export default function Login() {
             </Box>
 
             <Divider>
-              <Typography sx={{ color: "#94a3b8", fontSize: "0.85rem", px: 1 }}>
-                ou continuer avec
-              </Typography>
+              <Typography variant="body2">ou continuer avec</Typography>
             </Divider>
 
             <Button
               fullWidth
               variant="outlined"
               startIcon={<GoogleIcon />}
+              className="btn-google"
               onClick={() => {
                 window.location.href = googleLoginUrl;
               }}
-              sx={{
-                py: 1.5,
-                borderRadius: "12px",
-                borderColor: "#e2e8f0",
-                color: "#475569",
-                fontWeight: 700,
-                textTransform: "none",
-                "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" },
-              }}
             >
-              Google
+              Login avec Google
             </Button>
 
-            <Typography
-              sx={{ textAlign: "center", fontSize: "0.9rem", color: "#6b7280" }}
-            >
+            <Typography sx={{ textAlign: "center" }}>
               Nouveau ici ?{" "}
-              <Link
-                href="/sign-up"
-                sx={{
-                  color: "#1a73e8",
-                  fontWeight: 700,
-                  textDecoration: "none",
-                  "&:hover": { textDecoration: "underline" },
-                }}
-              >
-                Créer un compte free
+              <Link href="/sign-up" underline="none" sx={{ fontWeight: 800 }}>
+                Créer un compte gratuit
               </Link>
             </Typography>
           </Stack>
-        </Card>
+        </div>
       </Box>
 
-      <Box
-        sx={{ py: 3, textAlign: "center", color: "#94a3b8", fontSize: "13px" }}
-      >
-        © 2026 SubstancIA — Apprendre plus intelligemment.
-      </Box>
+      <Box sx={{ py: 2, textAlign: "center" }} />
     </Box>
   );
 }

@@ -282,27 +282,34 @@
 //     </>
 //   );
 // }
-
 import React, { useState } from "react";
 import {
   Box,
   Button,
-  Card,
   CssBaseline,
-  Divider,
   FormControl,
-  FormLabel,
   Link,
   Stack,
   TextField,
   Typography,
+  Divider,
+  useTheme,
+  InputAdornment,
 } from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
+import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome"; // ✅ icône "sparkle" comme l'image
 import { useNavigate } from "react-router-dom";
 
 export default function SignUp() {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const primaryColor = theme.palette.primary.main;
 
+  // États pour la validation
   const [emailError, setEmailError] = useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = useState("");
   const [passwordError, setPasswordError] = useState(false);
@@ -322,7 +329,9 @@ export default function SignUp() {
     `client_id=${GOOGLE_CLIENT_ID}` +
     `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
     `&response_type=code` +
-    `&scope=email%20profile`;
+    `&scope=email%20profile` +
+    `&access_type=offline` +
+    `&prompt=consent`;
 
   const validateInputs = () => {
     const email = document.getElementById("email");
@@ -391,28 +400,21 @@ export default function SignUp() {
           body: JSON.stringify(payload),
         }
       );
+
       const result = await res.json();
+
       if (!res.ok) {
-        const errorData = await res.json();
         alert(result.message || "Erreur lors de l'inscription.");
         return;
       }
 
-      // Supposons que ton backend renvoie un token JWT dans result.token
-      const token = result.token;
-      if (token) {
-        // Stockage du token JWT côté client (ici localStorage)
-        localStorage.setItem("token", token);
-
-        // Optionnel : tu peux aussi stocker les infos utilisateur
+      if (result.token) {
+        localStorage.setItem("token", result.token);
         localStorage.setItem("user", JSON.stringify(result.user));
-
-        // Redirection après inscription
         navigate("/profiling-test");
-
-        //navigate("/pdf-manager");
       } else {
-        alert("Inscription réussie mais pas de token reçu.");
+        alert("Inscription réussie ! Veuillez vous connecter.");
+        navigate("/login");
       }
     } catch (error) {
       alert("Erreur réseau ou serveur.");
@@ -420,170 +422,221 @@ export default function SignUp() {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        bgcolor: "#fff",
-      }}
-    >
+    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <CssBaseline />
 
+      {/* ✅ Même background que Login */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        body {
-          background: radial-gradient(circle at top left, #eff6ff 0%, #ffffff 40%) !important;
+
+        body{
           font-family: 'Plus Jakarta Sans', sans-serif !important;
-          margin: 0; padding: 0;
+          background: #F9FDFC;
+        }
+
+        .signup-panel{
+          width: 100%;
+          max-width: 420px;
+          padding: 22px;
+          border-radius: 22px;
+          background: transparent;
+        }
+
+        .field3d .MuiOutlinedInput-root{
+          border-radius: 14px !important;
+          background: rgba(255,255,255,0.78);
+          box-shadow:
+            0 10px 22px rgba(15,23,42,0.10),
+            inset 0 2px 0 rgba(255,255,255,0.95),
+            inset 0 -2px 6px rgba(15,23,42,0.06);
+          transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        }
+
+        .field3d .MuiOutlinedInput-notchedOutline{
+          border-color: rgba(26,115,232,0.20) !important;
+        }
+
+        .field3d .MuiOutlinedInput-root:hover{
+          transform: translateY(-1px);
+          box-shadow:
+            0 14px 28px rgba(15,23,42,0.14),
+            inset 0 2px 0 rgba(255,255,255,0.95),
+            inset 0 -2px 10px rgba(15,23,42,0.08);
+        }
+
+        .field3d .MuiOutlinedInput-root.Mui-focused{
+          transform: translateY(-1px);
+          box-shadow:
+            0 16px 34px rgba(26,115,232,0.18),
+            0 0 0 5px rgba(26,115,232,0.14),
+            inset 0 2px 0 rgba(255,255,255,0.95);
+        }
+
+        .field3d .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline{
+          border-color: rgba(26,115,232,0.55) !important;
+        }
+
+        .btn-main{
+          height: 52px;
+          border-radius: 14px !important;
+          font-weight: 900 !important;
+          text-transform: none !important;
+          box-shadow: 0 14px 30px rgba(26,115,232,0.22);
+        }
+
+        .btn-google{
+          border-radius: 14px !important;
+          text-transform: none !important;
+          font-weight: 800 !important;
+          background: rgba(255,255,255,0.45);
+          backdrop-filter: blur(10px);
+        }
+
+        @media (max-width: 420px){
+          .signup-panel{ padding: 16px; }
         }
       `}</style>
 
-      {/* HEADER LOGO */}
-      <Box sx={{ p: 3, display: "flex", justifyContent: "center" }}>
-        <Box
-          onClick={() => navigate("/")}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            cursor: "pointer",
-          }}
-        >
-          <Box
-            sx={{
-              bgcolor: "#1a73e8",
-              color: "white",
-              px: 1.5,
-              py: 0.5,
-              borderRadius: "8px",
-              fontWeight: 800,
-            }}
-          >
-            IA
-          </Box>
-          <Typography
-            sx={{ fontSize: "22px", fontWeight: 800, color: "#1a73e8" }}
-          >
-            SubstancIA
+      {/* HEADER (même style SubstancIA) */}
+      <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
+        <Box onClick={() => navigate("/")} sx={{ cursor: "pointer" }}>
+          <Typography variant="h6" fontWeight="bold">
+            Substanc
+            <Box component="span" sx={{ color: primaryColor }}>
+              IA
+            </Box>
           </Typography>
         </Box>
       </Box>
 
-      {/* FORMULAIRE - Centré mais avec scroll autorisé */}
+      {/* CONTENU */}
       <Box
         sx={{
           flex: 1,
           display: "flex",
-          alignItems: "flex-start",
+          alignItems: "center",
           justifyContent: "center",
-          pb: 5,
+          p: 2,
         }}
       >
-        <Card
-          sx={{
-            width: "90%",
-            maxWidth: 450,
-            p: { xs: 3, md: 5 },
-            borderRadius: "32px",
-            border: "1px solid #f1f5f9",
-            boxShadow: "0 20px 40px rgba(0,0,0,0.05)",
-            bgcolor: "#fff",
-          }}
-        >
+        <div className="signup-panel">
           <Stack spacing={3}>
-            <Box textAlign="center">
-              <Typography sx={{ fontSize: "26px", fontWeight: 800 }}>
-                Créer un compte ✨
+            {/* ✅ Remplace "Go" par "Créer un compte" + icône sparkle blanche */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1.2,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 900,
+                  fontSize: 26,
+                  mt: "-12px", // ✅ même effet que Login
+                }}
+              >
+                Créer un compte
               </Typography>
-              <Typography sx={{ color: "#6b7280", fontSize: "14px" }}>
-                Rejoignez SubstancIA aujourd'hui.
-              </Typography>
+
+              {/* ✅ icône "sparkle" en blanc */}
+              <Box
+                sx={{
+                  mt: "-12px",
+                  width: 34,
+                  height: 34,
+                  borderRadius: "10px",
+                  background: primaryColor,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 12px 24px rgba(26,115,232,0.22)",
+                }}
+              >
+                <AutoAwesomeIcon sx={{ color: "#fff", fontSize: 26 }} />
+              </Box>
             </Box>
 
             <Box component="form" onSubmit={handleSubmit} noValidate>
               <Stack spacing={2}>
                 <FormControl>
-                  <FormLabel
-                    sx={{ fontSize: "13px", fontWeight: 700, mb: 0.5 }}
-                  >
-                    Nom Complet
-                  </FormLabel>
                   <TextField
-                    size="small"
-                    name="name"
+                    className="field3d"
                     id="name"
-                    placeholder="Jean Dupont"
+                    name="name"
+                    placeholder="Nom complet"
                     required
                     fullWidth
                     error={nameError}
                     helperText={nameErrorMessage}
-                    sx={{
-                      "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <BadgeOutlinedIcon sx={{ color: primaryColor }} />
+                        </InputAdornment>
+                      ),
                     }}
                   />
                 </FormControl>
 
                 <FormControl>
-                  <FormLabel
-                    sx={{ fontSize: "13px", fontWeight: 700, mb: 0.5 }}
-                  >
-                    Nom d'utilisateur
-                  </FormLabel>
                   <TextField
-                    size="small"
-                    name="username"
+                    className="field3d"
                     id="username"
-                    placeholder="jeandupont"
+                    name="username"
+                    placeholder="Nom d'utilisateur"
                     required
                     fullWidth
                     error={usernameError}
                     helperText={usernameErrorMessage}
-                    sx={{
-                      "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PersonOutlineIcon sx={{ color: primaryColor }} />
+                        </InputAdornment>
+                      ),
                     }}
                   />
                 </FormControl>
 
                 <FormControl>
-                  <FormLabel
-                    sx={{ fontSize: "13px", fontWeight: 700, mb: 0.5 }}
-                  >
-                    Email
-                  </FormLabel>
                   <TextField
-                    size="small"
-                    name="email"
+                    className="field3d"
                     id="email"
-                    placeholder="jean@exemple.com"
+                    name="email"
+                    placeholder="Email"
                     required
                     fullWidth
                     error={emailError}
                     helperText={emailErrorMessage}
-                    sx={{
-                      "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <EmailOutlinedIcon sx={{ color: primaryColor }} />
+                        </InputAdornment>
+                      ),
                     }}
                   />
                 </FormControl>
 
                 <FormControl>
-                  <FormLabel
-                    sx={{ fontSize: "13px", fontWeight: 700, mb: 0.5 }}
-                  >
-                    Mot de passe
-                  </FormLabel>
                   <TextField
-                    size="small"
-                    required
-                    fullWidth
+                    className="field3d"
+                    id="password"
                     name="password"
                     type="password"
-                    id="password"
-                    placeholder="••••••••"
+                    placeholder="Mot de passe"
+                    required
+                    fullWidth
                     error={passwordError}
                     helperText={passwordErrorMessage}
-                    sx={{
-                      "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LockOutlinedIcon sx={{ color: primaryColor }} />
+                        </InputAdornment>
+                      ),
                     }}
                   />
                 </FormControl>
@@ -592,15 +645,7 @@ export default function SignUp() {
                   type="submit"
                   fullWidth
                   variant="contained"
-                  sx={{
-                    py: 1.5,
-                    mt: 1,
-                    borderRadius: "10px",
-                    bgcolor: "#1a73e8",
-                    fontWeight: 800,
-                    textTransform: "none",
-                    "&:hover": { bgcolor: "#111827" },
-                  }}
+                  className="btn-main"
                 >
                   S'inscrire
                 </Button>
@@ -608,59 +653,36 @@ export default function SignUp() {
             </Box>
 
             <Divider>
-              <Typography sx={{ color: "#94a3b8", fontSize: "12px", px: 1 }}>
-                ou
-              </Typography>
+              <Typography variant="body2">ou continuer avec</Typography>
             </Divider>
 
             <Button
               fullWidth
               variant="outlined"
               startIcon={<GoogleIcon />}
+              className="btn-google"
               onClick={() => {
                 window.location.href = googleLoginUrl;
               }}
-              sx={{
-                py: 1.2,
-                borderRadius: "10px",
-                fontWeight: 700,
-                textTransform: "none",
-                color: "#475569",
-                borderColor: "#e2e8f0",
-              }}
             >
-              Google
+              S'inscrire avec Google
             </Button>
 
-            <Typography sx={{ textAlign: "center", fontSize: "14px" }}>
+            <Typography sx={{ textAlign: "center" }}>
               Déjà un compte ?{" "}
               <Link
-                href="/login"
-                sx={{
-                  color: "#1a73e8",
-                  fontWeight: 700,
-                  textDecoration: "none",
-                }}
+                onClick={() => navigate("/login")}
+                underline="none"
+                sx={{ fontWeight: 800, cursor: "pointer" }}
               >
                 Se connecter
               </Link>
             </Typography>
           </Stack>
-        </Card>
+        </div>
       </Box>
 
-      {/* FOOTER BAS DE PAGE */}
-      <Box
-        sx={{
-          py: 2,
-          textAlign: "center",
-          color: "#94a3b8",
-          fontSize: "12px",
-          mt: "auto",
-        }}
-      >
-        © 2026 SubstancIA
-      </Box>
+      <Box sx={{ py: 2, textAlign: "center" }} />
     </Box>
   );
 }

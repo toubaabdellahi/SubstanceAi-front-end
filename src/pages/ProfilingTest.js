@@ -510,7 +510,6 @@
 //     </div>
 //   );
 // }
-
 import React, { useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
@@ -523,17 +522,15 @@ import {
   Button,
   Paper,
   Container,
-  LinearProgress,
   Chip,
   CircularProgress,
-  Stack,
 } from "@mui/material";
 import {
   CheckCircle as CheckIcon,
-  RadioButtonChecked as SingleIcon,
-  CheckBox as MultiIcon,
+  RadioButtonChecked as RadioCheckedIcon,
+  CheckBox as CheckboxCheckedIcon,
+  CheckBoxOutlineBlank as CheckboxUncheckedIcon,
   Lock as LockIcon,
-  AutoAwesome as AIIcon,
 } from "@mui/icons-material";
 
 const APIP = axios.create({
@@ -546,90 +543,120 @@ APIP.interceptors.request.use((config) => {
   return config;
 });
 
-// --- STYLED COMPONENTS MIS À JOUR POUR LE SCROLL ---
+/**
+ * ✅ Fix responsive / scroll:
+ * - on évite double scroll sur mobile en mettant html/body/#root en overflow: hidden
+ * - le scroll reste uniquement sur PageWrapper (100vh + overflowY:auto)
+ */
 
-const PageWrapper = styled(Box)({
-  backgroundColor: "#f0f2f9",
-  height: "100vh", // Fixe la hauteur à la vue du navigateur
-  overflowY: "auto", // Active le scroll vertical si le contenu dépasse
+const PAGE_BG = "#EAF2FF"; // bleu clair
+
+const PageWrapper = styled(Box)(({ theme }) => ({
+  height: "100vh",
+  overflowY: "auto",
+  WebkitOverflowScrolling: "touch",
+  backgroundColor: PAGE_BG,
+  backgroundImage:
+    "radial-gradient(rgba(26,115,232,0.10) 0.8px, transparent 0.8px)",
+  backgroundSize: "22px 22px",
+
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  padding: "40px 20px",
+  padding: "24px 14px",
+  [theme.breakpoints.up("sm")]: { padding: "40px 20px" },
 
-  // Style de la barre de défilement personnalisée (plus propre)
-  "&::-webkit-scrollbar": {
-    width: "8px",
-  },
-  "&::-webkit-scrollbar-track": {
-    background: "transparent",
-  },
+  "&::-webkit-scrollbar": { width: "8px" },
+  "&::-webkit-scrollbar-track": { background: "transparent" },
   "&::-webkit-scrollbar-thumb": {
     backgroundColor: "#dadce0",
     borderRadius: "10px",
-    border: "2px solid #f0f2f9",
+    border: `2px solid ${PAGE_BG}`,
   },
-  "&::-webkit-scrollbar-thumb:hover": {
-    backgroundColor: "#bdc1c6",
-  },
-});
+  "&::-webkit-scrollbar-thumb:hover": { backgroundColor: "#bdc1c6" },
+}));
 
-const QuestionCard = styled(Paper)({
+const QuestionCard = styled(Paper)(({ theme }) => ({
   width: "100%",
-  maxWidth: "700px",
-  padding: "40px",
-  borderRadius: "24px",
-  border: "1px solid #e0e4f0",
-  boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+  maxWidth: 760,
+  padding: 22,
+  borderRadius: 24,
+  border: "1px solid #e6eaf3",
   backgroundColor: "#ffffff",
-  marginBottom: "40px", // Espace en bas pour ne pas coller au bord
-});
+  boxShadow: "0 10px 26px rgba(15,23,42,0.08)",
+  marginBottom: 24,
+  [theme.breakpoints.up("sm")]: { padding: 40, marginBottom: 40 },
+}));
 
-// ... (OptionButton et ActionButton restent identiques)
 const OptionButton = styled(Button)(({ selected }) => ({
   justifyContent: "flex-start",
   textTransform: "none",
   width: "100%",
-  padding: "16px 20px",
-  borderRadius: "14px",
-  marginBottom: "12px",
+  padding: "16px 18px",
+  borderRadius: 14,
+  marginBottom: 12,
   fontSize: "1rem",
-  fontWeight: 500,
-  border: selected ? "2px solid #1a73e8" : "1px solid #e0e4f0",
+  fontWeight: 600,
+  border: selected ? "2px solid #1a73e8" : "1px solid #dde3f0",
   backgroundColor: selected ? "#e8f0fe" : "#ffffff",
-  color: selected ? "#1a73e8" : "#3c4043",
+  color: selected ? "#1a73e8" : "#202124",
   transition: "all 0.2s ease",
   "&:hover": {
-    backgroundColor: selected ? "#d2e3fc" : "#f8f9fa",
-    borderColor: selected ? "#1a73e8" : "#dadce0",
+    backgroundColor: selected ? "#dbe8ff" : "#f8fafc",
+    borderColor: selected ? "#1a73e8" : "#cfd7ea",
   },
 }));
 
-const ActionButton = styled(Button)({
-  borderRadius: "12px",
-  padding: "12px 30px",
+const PrimaryButton = styled(Button)(({ theme }) => ({
+  height: 56,
+  borderRadius: 14,
   textTransform: "none",
-  fontWeight: 600,
+  fontWeight: 900,
   fontSize: "1rem",
   backgroundColor: "#1a73e8",
-  boxShadow: "none",
+  color: "#000",
+  boxShadow: "0 14px 30px rgba(26,115,232,0.22)",
   "&:hover": {
     backgroundColor: "#1765cc",
-    boxShadow: "0 4px 12px rgba(26, 115, 232, 0.2)",
+    boxShadow: "0 18px 36px rgba(26,115,232,0.26)",
   },
-  "&.Mui-disabled": { backgroundColor: "#e0e4f0" },
-});
+  "&.Mui-disabled": {
+    backgroundColor: "#e6ebf2",
+    boxShadow: "none",
+    color: "#000",
+  },
+  [theme.breakpoints.down("sm")]: { height: 52 },
+}));
+
+const SecondaryButton = styled(Button)(({ theme }) => ({
+  height: 56,
+  borderRadius: 14,
+  textTransform: "none",
+  fontWeight: 900,
+  fontSize: "1rem",
+  color: "#000",
+  border: "1px solid #c6dafc",
+  backgroundColor: "#ffffff",
+  "&:hover": { backgroundColor: "#f6f9ff", borderColor: "#1a73e8" },
+  "&.Mui-disabled": { opacity: 0.6, color: "#000" },
+  [theme.breakpoints.down("sm")]: { height: 52 },
+}));
 
 export default function ProfilingTest() {
   const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [goingBack, setGoingBack] = useState(false);
+
   const [questionsReponses, setQuestionsReponses] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(null);
+
   const [currentAnswer, setCurrentAnswer] = useState(null);
   const [multipleAnswers, setMultipleAnswers] = useState([]);
+
   const [isCompleted, setIsCompleted] = useState(false);
   const [maxQuestions, setMaxQuestions] = useState(10);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -643,22 +670,24 @@ export default function ProfilingTest() {
       const id = decoded.user_id || decoded.id;
       setUserId(id);
       startProfiling(id);
-    } catch (e) {
+    } catch {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startProfiling = async (id) => {
     try {
-      const response = await APIP.post("start/", {
+      const res = await APIP.post("start/", {
         user_id: id,
         num_random_questions: 5,
       });
-      setQuestionsReponses(response.data.questions_reponses || []);
-      setCurrentQuestion(response.data.next_question || null);
-      setMaxQuestions(response.data.max_questions || 10);
-      setLoading(false);
-    } catch (err) {
+      setQuestionsReponses(res.data.questions_reponses || []);
+      setCurrentQuestion(res.data.next_question || null);
+      setMaxQuestions(res.data.max_questions || 10);
+    } catch {
+      // silence
+    } finally {
       setLoading(false);
     }
   };
@@ -673,9 +702,50 @@ export default function ProfilingTest() {
     );
   };
 
+  const answeredCount = questionsReponses.filter(
+    (q) => q.reponse !== null
+  ).length;
+  const progress = maxQuestions ? (answeredCount / maxQuestions) * 100 : 0;
+
+  const goPrevious = async () => {
+    if (!userId) return;
+    if (answeredCount === 0) return;
+
+    setGoingBack(true);
+    try {
+      const res = await APIP.post("previous/", { user_id: userId });
+      const prevQuestion = res.data.prev_question;
+      if (!prevQuestion) return;
+
+      setQuestionsReponses(res.data.questions_reponses || []);
+      setCurrentQuestion(prevQuestion);
+
+      if (prevQuestion.type === "single") {
+        setCurrentAnswer(prevQuestion.reponse || null);
+        setMultipleAnswers([]);
+      } else {
+        setMultipleAnswers(
+          Array.isArray(prevQuestion.reponse) ? prevQuestion.reponse : []
+        );
+        setCurrentAnswer(null);
+      }
+
+      document
+        .getElementById("page-wrapper")
+        ?.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      alert("Erreur retour arrière");
+    } finally {
+      setGoingBack(false);
+    }
+  };
+
   const submitAnswer = async () => {
-    let finalAnswer =
+    if (!currentQuestion) return;
+
+    const finalAnswer =
       currentQuestion.type === "single" ? currentAnswer : multipleAnswers;
+
     if (
       !finalAnswer ||
       (Array.isArray(finalAnswer) && finalAnswer.length === 0)
@@ -684,166 +754,190 @@ export default function ProfilingTest() {
 
     setSubmitting(true);
     try {
-      const response = await APIP.post("answer/", {
+      const res = await APIP.post("answer/", {
         user_id: userId,
         reponse: finalAnswer,
         questions_reponses: questionsReponses,
-        max_questions: maxQuestions,
       });
 
-      setQuestionsReponses(response.data.questions_reponses || []);
+      setQuestionsReponses(res.data.questions_reponses || []);
       setCurrentAnswer(null);
       setMultipleAnswers([]);
 
-      if (response.data.next_question) {
-        setCurrentQuestion(response.data.next_question);
-        // Remonte le scroll en haut de la carte pour la nouvelle question
+      if (res.data.next_question) {
+        setCurrentQuestion(res.data.next_question);
         document
           .getElementById("page-wrapper")
-          .scrollTo({ top: 0, behavior: "smooth" });
+          ?.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         setIsCompleted(true);
         setCurrentQuestion(null);
         setTimeout(() => navigate("/pdf-manager"), 2500);
       }
-    } catch (err) {
+    } catch {
       alert("Erreur réseau");
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <PageWrapper sx={{ justifyContent: "center" }}>
+      <PageWrapper id="page-wrapper" sx={{ justifyContent: "center" }}>
+        <CssBaseline />
         <CircularProgress sx={{ color: "#1a73e8" }} />
       </PageWrapper>
     );
-
-  const progress =
-    (questionsReponses.filter((q) => q.reponse !== null).length /
-      maxQuestions) *
-    100;
+  }
 
   return (
     <PageWrapper id="page-wrapper">
       <CssBaseline />
 
-      {/* LOGO SUBSTANCIA */}
-      <Stack
-        direction="row"
-        spacing={1}
-        alignItems="center"
-        sx={{ mb: 6, flexShrink: 0 }}
-      >
-        <AIIcon sx={{ color: "#1a73e8", fontSize: 32 }} />
-        <Typography
-          variant="h5"
-          sx={{ fontWeight: 800, color: "#1a73e8", letterSpacing: "-0.5px" }}
-        >
-          SubstancIA
-        </Typography>
-      </Stack>
+      {/* ✅ Fix responsive: 1 seul scroll (PageWrapper) */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        html, body, #root { height: 100%; overflow: hidden; } /* ✅ important */
+        body{ font-family: 'Plus Jakarta Sans', sans-serif !important; }
+      `}</style>
 
-      <Container maxWidth="sm" sx={{ flexShrink: 0 }}>
-        {/* BARRE DE PROGRESSION */}
+      {/* LOGO : Substanc noir + IA bleu */}
+      <Box sx={{ mb: { xs: 3, sm: 6 }, textAlign: "center" }}>
+        <Typography
+          sx={{ fontWeight: 900, fontSize: 24, letterSpacing: "-0.5px" }}
+        >
+          <Box component="span" sx={{ color: "#111" }}>
+            Substanc
+          </Box>
+          <Box component="span" sx={{ color: "#1a73e8" }}>
+            IA
+          </Box>
+        </Typography>
+      </Box>
+
+      <Container maxWidth="sm" sx={{ width: "100%" }}>
+        {/* TEST DU PROFIL centré + % à droite */}
         {!isCompleted && userId && (
-          <Box sx={{ mb: 4 }}>
-            <Box
-              sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}
-            >
+          <Box sx={{ width: "100%", maxWidth: 760, mb: { xs: 2.5, sm: 4 } }}>
+            <Box sx={{ position: "relative", mb: 1.2, minHeight: 18 }}>
               <Typography
-                variant="caption"
                 sx={{
+                  fontSize: 13,
                   fontWeight: 800,
                   color: "#5f6368",
-                  letterSpacing: "0.5px",
+                  letterSpacing: "0.6px",
+                  textAlign: "center",
                 }}
               >
                 TEST DU PROFIL
               </Typography>
+
               <Typography
-                variant="caption"
-                sx={{ fontWeight: 800, color: "#1a73e8" }}
+                sx={{
+                  position: "absolute",
+                  right: 0,
+                  top: 0,
+                  fontSize: 13,
+                  fontWeight: 900,
+                  color: "#1a73e8",
+                }}
               >
                 {Math.round(progress)}%
               </Typography>
             </Box>
-            <LinearProgress
-              variant="determinate"
-              value={progress}
+
+            <Box
               sx={{
+                width: "100%",
                 height: 6,
-                borderRadius: 3,
-                bgcolor: "#e0e4f0",
-                "& .MuiLinearProgress-bar": { bgcolor: "#1a73e8" },
+                borderRadius: 999,
+                backgroundColor: "#dfe6f2",
+                overflow: "hidden",
               }}
-            />
+            >
+              <Box
+                sx={{
+                  height: "100%",
+                  width: `${Math.round(progress)}%`,
+                  backgroundColor: "#1a73e8",
+                  borderRadius: 999,
+                  transition: "width .25s ease",
+                }}
+              />
+            </Box>
           </Box>
         )}
 
-        {/* CARTE DE TEST */}
         {!userId ? (
           <QuestionCard sx={{ textAlign: "center" }}>
-            <LockIcon sx={{ fontSize: 48, color: "#dadce0", mb: 2 }} />
-            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+            <LockIcon sx={{ fontSize: 48, color: "#c7cfdd", mb: 2 }} />
+            <Typography sx={{ fontSize: 22, fontWeight: 900, mb: 1 }}>
               Session requise
             </Typography>
             <Typography sx={{ color: "#5f6368", mb: 4 }}>
               Veuillez vous connecter pour passer le test.
             </Typography>
-            <ActionButton
-              onClick={() => navigate("/login")}
-              variant="contained"
-              fullWidth
-            >
+            <PrimaryButton onClick={() => navigate("/login")} fullWidth>
               Se connecter
-            </ActionButton>
+            </PrimaryButton>
           </QuestionCard>
         ) : currentQuestion && !isCompleted ? (
           <QuestionCard>
-            <Chip
-              label={currentQuestion.category || "Profilage"}
-              size="small"
-              sx={{
-                mb: 2,
-                bgcolor: "#e8f0fe",
-                color: "#1a73e8",
-                fontWeight: 700,
-                borderRadius: "8px",
-              }}
-            />
+            <Box sx={{ display: "flex", justifyContent: "center" }}>
+              <Chip
+                label={currentQuestion.category || "Profilage"}
+                size="small"
+                sx={{
+                  mb: 2,
+                  bgcolor: "#e8f0fe",
+                  color: "#1a73e8",
+                  fontWeight: 900,
+                  borderRadius: "10px",
+                }}
+              />
+            </Box>
 
             <Typography
-              variant="h5"
-              sx={{ fontWeight: 700, color: "#202124", mb: 4, lineHeight: 1.4 }}
+              sx={{
+                textAlign: "center",
+                fontSize: { xs: 22, sm: 28 },
+                fontWeight: 900,
+                color: "#202124",
+                mb: { xs: 3, sm: 4 },
+                lineHeight: 1.25,
+              }}
             >
               {currentQuestion.question}
             </Typography>
 
-            <Box sx={{ mb: 4 }}>
+            <Box sx={{ mb: 3 }}>
               {currentQuestion.options.map((option, index) => {
                 const isSelected =
                   currentQuestion.type === "single"
                     ? currentAnswer === option
                     : multipleAnswers.includes(option);
 
+                const icon =
+                  currentQuestion.type === "single" ? (
+                    isSelected ? (
+                      <RadioCheckedIcon />
+                    ) : null
+                  ) : isSelected ? (
+                    <CheckboxCheckedIcon />
+                  ) : (
+                    <CheckboxUncheckedIcon />
+                  );
+
                 return (
                   <OptionButton
                     key={index}
-                    selected={isSelected}
+                    selected={isSelected ? 1 : 0}
                     onClick={() =>
                       currentQuestion.type === "single"
                         ? handleSingleChoice(option)
                         : handleMultipleChoice(option)
                     }
-                    startIcon={
-                      currentQuestion.type === "single" ? (
-                        <SingleIcon />
-                      ) : (
-                        <MultiIcon />
-                      )
-                    }
+                    startIcon={icon}
                   >
                     {option}
                   </OptionButton>
@@ -851,25 +945,46 @@ export default function ProfilingTest() {
               })}
             </Box>
 
-            <ActionButton
-              fullWidth
-              variant="contained"
-              onClick={submitAnswer}
-              disabled={
-                submitting || (!currentAnswer && multipleAnswers.length === 0)
-              }
+            <Box
+              sx={{
+                display: "flex",
+                gap: 2,
+                flexDirection: { xs: "column", sm: "row" },
+              }}
             >
-              {submitting ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                "Suivant"
-              )}
-            </ActionButton>
+              <SecondaryButton
+                fullWidth
+                onClick={goPrevious}
+                disabled={goingBack || submitting || answeredCount === 0}
+              >
+                {goingBack ? (
+                  <CircularProgress size={22} sx={{ color: "#000" }} />
+                ) : (
+                  "Précédent"
+                )}
+              </SecondaryButton>
+
+              <PrimaryButton
+                fullWidth
+                onClick={submitAnswer}
+                disabled={
+                  submitting || (!currentAnswer && multipleAnswers.length === 0)
+                }
+              >
+                {submitting ? (
+                  <CircularProgress size={24} sx={{ color: "#000" }} />
+                ) : (
+                  "Suivant"
+                )}
+              </PrimaryButton>
+            </Box>
           </QuestionCard>
         ) : isCompleted ? (
-          <QuestionCard sx={{ textAlign: "center", py: 6 }}>
+          <QuestionCard sx={{ textAlign: "center", py: { xs: 5, sm: 6 } }}>
             <CheckIcon sx={{ fontSize: 64, color: "#34a853", mb: 2 }} />
-            <Typography variant="h4" sx={{ fontWeight: 800, mb: 2 }}>
+            <Typography
+              sx={{ fontSize: { xs: 24, sm: 30 }, fontWeight: 900, mb: 1.5 }}
+            >
               Analyse terminée !
             </Typography>
             <Typography sx={{ color: "#5f6368" }}>
